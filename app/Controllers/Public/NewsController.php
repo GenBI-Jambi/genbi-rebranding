@@ -69,9 +69,13 @@ final class NewsController
             $items = $this->readFromDatabase(static fn (News $news): array => $news->paginate($filters, $pg['per_page'], $pg['offset'])) ?? [];
             $total = $this->readFromDatabase(static fn (News $news): int => $news->countPublic($filters)) ?? count($items);
             $totalPages = Paginator::totalPages($total, $pg['per_page']);
+            $categories = $this->readFromDatabase(
+                static fn (News $news): array => $news->categories()
+            ) ?? [];
 
             $html = $this->viewRenderer->renderWithLayout('public/news/index.php', 'layouts/public.php', [
                 'items' => $items,
+                'categories' => $categories,
                 'page' => $pg['page'],
                 'perPage' => $pg['per_page'],
                 'total' => $total,
