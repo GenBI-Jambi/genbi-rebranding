@@ -72,10 +72,14 @@ final class NewsController
             $categories = $this->readFromDatabase(
                 static fn (News $news): array => $news->categories()
             ) ?? [];
+            $recentPosts = $this->readFromDatabase(
+                static fn (News $news): array => $news->paginate([], 5, 0)
+            ) ?? [];
 
             $html = $this->viewRenderer->renderWithLayout('public/news/index.php', 'layouts/public.php', [
                 'items' => $items,
                 'categories' => $categories,
+                'recentPosts' => $recentPosts,
                 'page' => $pg['page'],
                 'perPage' => $pg['per_page'],
                 'total' => $total,

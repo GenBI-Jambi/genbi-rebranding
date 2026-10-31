@@ -7,21 +7,95 @@ const API = window.GenBIAPI;
 renderShell('news');
 observeFadeUp();
 
-// Check if SSR markup exists - if so, only bind search form behavior
+// Check if SSR markup exists
 const list = document.querySelector('#news-list');
 if (list?.dataset.ssr === 'true') {
   document.body.classList.add('page-ready');
-  // Bind search input to submit the filter form on Enter
   const filterForm = document.querySelector('#news-filter-form');
   const searchInput = document.querySelector('#news-search');
-  if (searchInput && filterForm) {
+  const countEl = document.querySelector('#news-count');
+  const resetBtn = document.querySelector('#news-reset-link');
+  const pagination = document.querySelector('#news-pagination');
+  const articles = Array.from(list.querySelectorAll('article'));
+  let originalCountHtml = countEl ? countEl.innerHTML : '';
+
+  if (searchInput) {
+    // Smooth live filtering without needing any submit button
+    searchInput.addEventListener('input', (event) => {
+      const q = event.target.value.toLowerCase().trim();
+      let visibleCount = 0;
+
+      articles.forEach((art) => {
+        const titleEl = art.querySelector('h3');
+        const title = (titleEl?.textContent || '').toLowerCase();
+        const matches = !q || title.includes(q);
+        art.style.display = matches ? '' : 'none';
+        if (matches) visibleCount++;
+      });
+
+      // Show/hide reset button smoothly
+      if (resetBtn) {
+        if (q !== '') {
+          resetBtn.classList.remove('hidden');
+        } else {
+          // If input is empty and URL has no active query, hide reset button
+          const urlParams = new URLSearchParams(window.location.search);
+          if (!urlParams.get('q') && !urlParams.get('category')) {
+            resetBtn.classList.add('hidden');
+          }
+        }
+      }
+
+      // Smooth count feedback
+      if (countEl) {
+        if (q === '') {
+          countEl.innerHTML = originalCountHtml;
+        } else if (visibleCount > 0) {
+          countEl.innerHTML = `<div>Menampilkan <strong>${visibleCount}</strong> berita untuk pencarian judul "<strong>${escapeHtml(event.target.value)}</strong>".</div>`;
+        } else {
+          countEl.innerHTML = `<div>Tidak ada berita yang cocok dengan judul "<strong>${escapeHtml(event.target.value)}</strong>".</div>`;
+        }
+      }
+
+      // Dynamic empty state if all filtered out
+      let emptyMsg = list.querySelector('#news-live-empty');
+      if (visibleCount === 0 && articles.length > 0) {
+        if (!emptyMsg) {
+          emptyMsg = document.createElement('div');
+          emptyMsg.id = 'news-live-empty';
+          emptyMsg.className = 'rounded-2xl border border-neutral-900/10 bg-white p-8 text-center text-sm text-neutral-600';
+          emptyMsg.innerHTML = '<p class="font-medium text-neutral-800">Belum ada data berita yang cocok.</p><p class="mt-1 text-xs text-neutral-500">Silakan gunakan kata kunci judul lain atau klik Reset Filter.</p>';
+          list.appendChild(emptyMsg);
+        }
+        emptyMsg.style.display = '';
+      } else if (emptyMsg) {
+        emptyMsg.style.display = 'none';
+      }
+
+      // Hide server-side pagination while live search is active
+      if (pagination) {
+        pagination.style.display = q ? 'none' : '';
+      }
+    });
+
     searchInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
-        filterForm.submit();
+        if (filterForm) filterForm.submit();
       }
     });
   }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>'"]/g, tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag));
+  }
+
   return;
 }
 
@@ -53,7 +127,7 @@ async function init() {
 function renderNews() {
   const query = state.query.toLowerCase().trim();
   const filtered = news.filter((item) => {
-    const haystack = `${item.title} ${item.category} ${item.excerpt}`.toLowerCase();
+    const haystack = (item.title || '').toLowerCase();
     return (!query || haystack.includes(query)) && (state.category === 'Semua' || item.category === state.category);
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / state.perPage));

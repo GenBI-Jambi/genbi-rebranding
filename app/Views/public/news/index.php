@@ -8,128 +8,213 @@ $totalPages = $totalPages ?? 1;
 $filters = $filters ?? [];
 $activeQ = $filters['q'] ?? '';
 $activeCategory = $filters['category'] ?? '';
+$recentPosts = $recentPosts ?? [];
 $startItem = ($page - 1) * $perPage + 1;
 $endItem = min($page * $perPage, $total);
 ?>
 <section class="public-inner-hero py-16 md:py-24">
   <div class="article-container">
-    <p class="eyebrow">News</p>
+    <p class="eyebrow">Berita</p>
     <h1 class="page-title mt-5">Berita GenBI Jambi.</h1>
     <p class="lead mt-7">Layout dibuat seperti publikasi editorial. Pengguna membaca daftar berita dengan ritme yang nyaman, bukan grid kartu yang padat.</p>
   </div>
 </section>
+
 <section class="bg-cream py-12 md:py-16">
-  <div style="width:100%; max-width:1280px; margin:0 auto; padding:0 32px; box-sizing:border-box;">
-    <form class="news-filter mb-8 grid gap-3 md:grid-cols-[1fr_220px]" method="get" action="/news" id="news-filter-form">
-      <input id="news-search" name="q" class="input-soft" placeholder="Cari berita, kategori, atau topik" value="<?= $e($activeQ) ?>" aria-label="Cari berita" />
-      <div id="news-category"><?php if ($activeCategory !== ''): ?><input type="hidden" name="category" value="<?= $e($activeCategory) ?>" /><?php endif; ?></div>
+  <div class="site-container">
+    
+    <!-- Form Pencarian (Smooth Tanpa Tombol Cari) -->
+    <form class="news-filter mb-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3" method="get" action="/news" id="news-filter-form">
+      <?php if ($activeCategory !== ''): ?>
+        <input type="hidden" name="category" value="<?= $e($activeCategory) ?>" />
+      <?php endif; ?>
+      <div class="relative flex-1">
+        <input
+          id="news-search"
+          name="q"
+          type="text"
+          class="input-soft"
+          placeholder="Cari berita berdasarkan judul..."
+          value="<?= $e($activeQ) ?>"
+          aria-label="Cari berita"
+          autocomplete="off"
+        />
+      </div>
+      <a
+        href="/news"
+        id="news-reset-link"
+        class="btn btn-secondary text-sm flex items-center justify-center whitespace-nowrap <?= ($activeQ !== '' || $activeCategory !== '') ? '' : 'hidden' ?>"
+      >
+        Reset Filter
+      </a>
+      <div id="news-category" class="hidden"></div>
     </form>
-    <div class="mb-4 text-sm text-neutral-600" id="news-count">
+
+    <!-- Info Jumlah & Status Filter -->
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3 text-sm text-neutral-600" id="news-count">
       <?php if ($total > 0): ?>
-        Menampilkan <?= $startItem ?>–<?= $endItem ?> dari <?= $total ?> berita.
+        <div>Menampilkan <?= $startItem ?>–<?= $endItem ?> dari <?= $total ?> berita<?= $activeQ !== '' ? ' untuk pencarian judul "' . $e($activeQ) . '"' : '' ?><?= $activeCategory !== '' ? ' (Kategori: ' . $e($activeCategory) . ')' : '' ?>.</div>
       <?php else: ?>
-        Belum ada berita yang tersedia.
+        <div>Belum ada berita yang tersedia<?= $activeQ !== '' ? ' dengan judul "' . $e($activeQ) . '"' : '' ?>.</div>
       <?php endif; ?>
     </div>
       
-<div style="display:grid !important; grid-template-columns:minmax(0, 1fr) 260px !important; gap:32px; align-items:start; width:100%;">
+    <!-- Layout Berita & Sidebar -->
+    <div class="news-layout-grid">
 
-  <div id="news-list" data-ssr="true" style="width:100%; min-width:0;">
-    <h2 class="sr-only">Daftar Berita</h2>
+      <!-- Kolom Kiri: Daftar Berita -->
+      <div id="news-list" data-ssr="true" style="width:100%; min-width:0;">
+        <h2 class="sr-only">Daftar Berita</h2>
 
-    <?php if (!empty($items)): ?>
-      <?php foreach ($items as $index => $item): ?>
-        <article>
-          <a
-            data-transition
-            href="/news/<?= rawurlencode((string) $item['slug']) ?>"
-            class="article-link <?= $index === 0 ? 'pt-0 border-t-0' : '' ?>"
-          >
-            <div class="grid gap-5 md:grid-cols-[170px_1fr] md:items-start">
-              <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-blue-50">
-                <?php if (!empty($item['image'])): ?>
-                  <img
-                    src="<?= $e($item['image']) ?>"
-                    alt="<?= $e($item['title']) ?>"
-                    class="h-full w-full object-cover"
-                    loading="lazy"
-                    onerror="this.onerror=null;this.src='https://genbijambi.com/public/uploads/slider-1.png';"
-                  />
-                <?php endif; ?>
-              </div>
+        <?php if (!empty($items)): ?>
+          <?php foreach ($items as $index => $item): ?>
+            <article>
+              <a
+                data-transition
+                href="/news/<?= rawurlencode((string) $item['slug']) ?>"
+                class="article-link <?= $index === 0 ? 'pt-0 border-t-0' : '' ?>"
+              >
+                <div class="grid gap-5 md:grid-cols-[170px_1fr] md:items-start">
+                  <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-blue-50">
+                    <?php if (!empty($item['image'])): ?>
+                      <img
+                        src="<?= $e($item['image']) ?>"
+                        alt="<?= $e($item['title']) ?>"
+                        class="h-full w-full object-cover"
+                        loading="lazy"
+                        onerror="this.onerror=null;this.src='https://genbijambi.com/public/uploads/slider-1.png';"
+                      />
+                    <?php endif; ?>
+                  </div>
 
-              <div>
-                <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-neutral-500">
-                  <span class="text-blue-800"><?= $e($item['category']) ?></span>
-                  <span><?= $e(substr((string) ($item['date'] ?? ''), 0, 10)) ?></span>
+                  <div>
+                    <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-neutral-500">
+                      <span class="text-blue-800"><?= $e($item['category']) ?></span>
+                      <span><?= $e(substr((string) ($item['date'] ?? ''), 0, 10)) ?></span>
+                    </div>
+
+                    <h3 class="serif mt-3 text-3xl font-semibold leading-tight tracking-tight text-neutral-950">
+                      <?= $e($item['title']) ?>
+                    </h3>
+
+                    <p class="mt-4 text-base leading-7 text-neutral-600">
+                      <?= $e($item['excerpt']) ?>
+                    </p>
+                    <span class="btn btn-secondary mt-5 w-fit">Detail</span>
+                  </div>
                 </div>
-
-                <h3 class="serif mt-3 text-3xl font-semibold leading-tight tracking-tight text-neutral-950">
-                  <?= $e($item['title']) ?>
-                </h3>
-
-                <p class="mt-4 text-base leading-7 text-neutral-600">
-                  <?= $e($item['excerpt']) ?>
-                </p>
-                <span class="btn btn-secondary mt-5 w-fit">Detail</span>
-              </div>
+              </a>
+            </article>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="rounded-2xl border border-neutral-900/10 bg-white p-8 text-center text-sm text-neutral-600">
+            <p class="font-medium text-neutral-800">Belum ada data berita yang tersedia.</p>
+            <div class="mt-4">
+              <a href="/news" class="btn btn-secondary text-xs">Reset Semua Filter</a>
             </div>
-          </a>
-        </article>
-      <?php endforeach; ?>
-    <?php else: ?>
-      <div class="rounded-2xl border border-neutral-900/10 bg-white p-8 text-center text-sm text-neutral-600">
-        Belum ada data berita yang tersedia.
+          </div>
+        <?php endif; ?>
       </div>
-    <?php endif; ?>
-  </div>
 
-  <aside class="rounded-2xl border border-neutral-900/10 bg-white p-6">
-    <h2 class="text-sm font-bold tracking-[0.15em] text-neutral-900">
-      CATEGORIES
-    </h2>
+      <!-- Kolom Kanan: Sidebar Kategori & Berita Pos Terbaru -->
+      <aside class="news-sidebar space-y-6" style="width:100%;">
+        
+        <!-- Card Kategori -->
+        <div class="rounded-2xl border border-neutral-900/10 bg-white p-6">
+          <h2 class="text-sm font-bold tracking-[0.15em] text-neutral-900">
+            KATEGORI
+          </h2>
 
-    <div class="mt-4 border-t border-neutral-200"></div>
+          <div class="mt-4 border-t border-neutral-200"></div>
 
-    <ul class="mt-3 space-y-1">
-      <li>
-        <a
-          href="/news"
-          class="block rounded-lg px-3 py-2 text-sm transition hover:bg-blue-50 hover:text-blue-800 <?= $activeCategory === '' ? 'bg-blue-50 text-blue-800 font-semibold' : 'text-neutral-600' ?>"
-        >
-          Semua Berita
-        </a>
-      </li>
+          <ul class="mt-3 space-y-1">
+            <li>
+              <a
+                href="/news<?= $activeQ !== '' ? '?q=' . rawurlencode($activeQ) : '' ?>"
+                class="block rounded-lg px-3 py-2 text-sm transition hover:bg-blue-50 hover:text-blue-800 <?= $activeCategory === '' ? 'bg-blue-50 text-blue-800 font-semibold' : 'text-neutral-600' ?>"
+              >
+                Semua Berita
+              </a>
+            </li>
 
-      <?php foreach (($categories ?? []) as $category): ?>
-        <?php
-          $categoryName = (string) ($category['category_name'] ?? '');
-          $categoryId = (string) ($category['category_id'] ?? '');
-        ?>
+            <?php foreach (($categories ?? []) as $category): ?>
+              <?php
+                $categoryName = (string) ($category['category_name'] ?? '');
+                $categoryId = (string) ($category['category_id'] ?? '');
+                $isCategoryActive = ((string) $activeCategory === $categoryId || (string) $activeCategory === $categoryName);
+              ?>
 
-        <li>
-          <a
-            href="/news?<?= $e(http_build_query(array_filter([
-              'category' => $categoryId,
-              'q' => $activeQ,
-            ], static fn ($value) => $value !== '' && $value !== null))) ?>"
-            class="block rounded-lg px-3 py-2 text-sm transition hover:bg-blue-50 hover:text-blue-800 <?= (string) $activeCategory === $categoryId ? 'bg-blue-50 text-blue-800 font-semibold' : 'text-neutral-600' ?>"
-          >
-            <?= $e($categoryName) ?>
-          </a>
-        </li>
-      <?php endforeach; ?>
-    </ul>
+              <li>
+                <a
+                  href="/news?<?= $e(http_build_query(array_filter([
+                    'category' => $categoryName,
+                    'q' => $activeQ,
+                  ], static fn ($value) => $value !== '' && $value !== null))) ?>"
+                  class="block rounded-lg px-3 py-2 text-sm transition hover:bg-blue-50 hover:text-blue-800 <?= $isCategoryActive ? 'bg-blue-50 text-blue-800 font-semibold' : 'text-neutral-600' ?>"
+                >
+                  <?= $e($categoryName) ?>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
 
-    <?php if (empty($categories)): ?>
-      <p class="mt-4 text-sm text-neutral-500">
-        Belum ada kategori tersedia.
-      </p>
-    <?php endif; ?>
-  </aside>
+          <?php if (empty($categories)): ?>
+            <p class="mt-4 text-sm text-neutral-500">
+              Belum ada kategori tersedia.
+            </p>
+          <?php endif; ?>
+        </div>
 
-</div>
+        <!-- Card Berita Pos Terbaru -->
+        <div class="rounded-2xl border border-neutral-900/10 bg-white p-6">
+          <h2 class="text-sm font-bold tracking-[0.15em] text-neutral-900">
+            BERITA POS TERBARU
+          </h2>
 
+          <div class="mt-4 border-t border-neutral-200"></div>
+
+          <div class="mt-4 space-y-4">
+            <?php if (!empty($recentPosts)): ?>
+              <?php foreach ($recentPosts as $rIndex => $recentItem): ?>
+                <?php
+                  $rTitle = (string) ($recentItem['title'] ?? $recentItem['news_title'] ?? '');
+                  $rSlug = (string) ($recentItem['slug'] ?? '');
+                  $rDate = (string) ($recentItem['date'] ?? '');
+                  $rCategory = (string) ($recentItem['category'] ?? '');
+                  $rDateFormatted = $rDate !== '' ? date('d M Y', strtotime($rDate)) : '';
+                ?>
+                <article class="<?= $rIndex > 0 ? 'pt-3 border-t border-neutral-100' : '' ?>">
+                  <a
+                    data-transition
+                    href="/news/<?= rawurlencode($rSlug) ?>"
+                    class="group block"
+                  >
+                    <div class="flex items-center gap-2 text-xs font-semibold text-neutral-500">
+                      <span class="text-blue-800"><?= $e($rCategory) ?></span>
+                      <?php if ($rDateFormatted !== ''): ?>
+                        <span>•</span>
+                        <span><?= $e($rDateFormatted) ?></span>
+                      <?php endif; ?>
+                    </div>
+                    <h3 class="serif mt-1 text-base font-semibold leading-snug text-neutral-950 group-hover:text-blue-800 transition">
+                      <?= $e($rTitle) ?>
+                    </h3>
+                  </a>
+                </article>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <p class="text-sm text-neutral-500">
+                Belum ada berita terbaru.
+              </p>
+            <?php endif; ?>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+
+    <!-- Pagination -->
     <?php if ($totalPages > 1): ?>
       <nav class="public-pagination mt-8" id="news-pagination" aria-label="Pagination berita" data-ssr="true">
         <?php
@@ -159,5 +244,22 @@ $endItem = min($page * $perPage, $total);
     <?php else: ?>
       <div class="public-pagination mt-8" id="news-pagination" aria-label="Pagination berita"></div>
     <?php endif; ?>
+
   </div>
 </section>
+
+<style>
+.news-layout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 32px;
+  align-items: start;
+  width: 100%;
+}
+@media (max-width: 900px) {
+  .news-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+</style>

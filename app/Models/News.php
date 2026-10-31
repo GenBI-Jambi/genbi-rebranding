@@ -23,12 +23,18 @@ final class News
         $params = ['status' => 'published'];
 
         if (!empty($filters['category'])) {
-            $sql .= ' AND c.category_name = :category';
-            $params['category'] = $filters['category'];
+            if (is_numeric($filters['category'])) {
+                $sql .= ' AND (c.category_id = :category_id OR c.category_name = :category_name)';
+                $params['category_id'] = (int) $filters['category'];
+                $params['category_name'] = (string) $filters['category'];
+            } else {
+                $sql .= ' AND c.category_name = :category';
+                $params['category'] = $filters['category'];
+            }
         }
 
         if (!empty($filters['q'])) {
-            $sql .= ' AND (n.news_title LIKE :q OR n.news_content_short LIKE :q OR n.news_content LIKE :q OR c.category_name LIKE :q)';
+            $sql .= ' AND n.news_title LIKE :q';
             $params['q'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
         }
 
@@ -51,12 +57,18 @@ final class News
         $params = ['status' => 'published'];
 
         if (!empty($filters['category'])) {
-            $sql .= ' AND c.category_name = :category';
-            $params['category'] = $filters['category'];
+            if (is_numeric($filters['category'])) {
+                $sql .= ' AND (c.category_id = :category_id OR c.category_name = :category_name)';
+                $params['category_id'] = (int) $filters['category'];
+                $params['category_name'] = (string) $filters['category'];
+            } else {
+                $sql .= ' AND c.category_name = :category';
+                $params['category'] = $filters['category'];
+            }
         }
 
         if (!empty($filters['q'])) {
-            $sql .= ' AND (n.news_title LIKE :q OR n.news_content_short LIKE :q OR n.news_content LIKE :q OR c.category_name LIKE :q)';
+            $sql .= ' AND n.news_title LIKE :q';
             $params['q'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
         }
 
