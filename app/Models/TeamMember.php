@@ -18,7 +18,22 @@ class TeamMember
         $role = (string) ($row['designation'] ?? $row['jabatan_wilayah'] ?? $row['jabatan_komsat'] ?? 'Anggota');
         $detail = (string) ($row['detail'] ?? '');
         $photo = (string) ($row['photo'] ?? '');
-        $division = (string) ($row['division_name'] ?? 'Belum ada divisi');
+        $divisionId = isset($row['division_id']) ? (int) $row['division_id'] : (int) ($row['divisi_id'] ?? 0);
+        $division = trim((string) ($row['division_name'] ?? ''));
+        if ($division === '' || $division === 'Belum ada divisi') {
+            if ($divisionId === 101) {
+                $division = 'Media dan Creative Wilayah';
+            } elseif ($divisionId === 102) {
+                $division = 'IT dan Website Wilayah';
+            } elseif ($divisionId === 103) {
+                $division = 'Divisi Pengembangan Sumber Daya Manusia';
+            } else {
+                $division = 'Belum ada divisi';
+            }
+        }
+        if ((stripos($division, 'pengembangan sumber daya manusia') !== false || stripos($division, 'pengembangan sdm') !== false || strtolower($division) === 'psdm') && !preg_match('/^divisi\b/i', $division)) {
+            $division = 'Divisi ' . $division;
+        }
         $commission = (string) ($row['commission_name'] ?? $row['komsat'] ?? 'GenBI Jambi');
 
         return [
@@ -249,17 +264,17 @@ class TeamMember
     public function filterOptions(): array
     {
         if (!$this->db) {
-            return ['divisions' => [], 'campuses' => [], 'years' => []];
+            return ['divisions' => self::formatFilterDivisionNames([]), 'campuses' => [], 'years' => []];
         }
 
         try {
             return [
-                'divisions' => $this->db->query('SELECT nama FROM divisis ORDER BY nama')->fetchAll(PDO::FETCH_COLUMN),
+                'divisions' => self::formatFilterDivisionNames($this->db->query('SELECT nama FROM divisis ORDER BY nama')->fetchAll(PDO::FETCH_COLUMN)),
                 'campuses' => $this->db->query('SELECT nama FROM komsats ORDER BY nama')->fetchAll(PDO::FETCH_COLUMN),
                 'years' => array_map('strval', $this->db->query('SELECT DISTINCT tahun FROM teams WHERE deleted_at IS NULL ORDER BY tahun DESC')->fetchAll(PDO::FETCH_COLUMN)),
             ];
         } catch (Throwable) {
-            return ['divisions' => [], 'campuses' => [], 'years' => []];
+            return ['divisions' => self::formatFilterDivisionNames([]), 'campuses' => [], 'years' => []];
         }
     }
 
@@ -267,17 +282,95 @@ class TeamMember
     public function formOptions(): array
     {
         if (!$this->db) {
-            return ['divisions' => [], 'commissions' => []];
+            return ['divisions' => self::formatDivisionOptions([]), 'commissions' => []];
         }
 
         try {
             return [
-                'divisions' => $this->db->query('SELECT id, nama, komsat_id FROM divisis ORDER BY nama')->fetchAll(PDO::FETCH_ASSOC),
+                'divisions' => self::formatDivisionOptions($this->db->query('SELECT id, nama, komsat_id FROM divisis ORDER BY nama')->fetchAll(PDO::FETCH_ASSOC)),
                 'commissions' => $this->db->query('SELECT id, nama FROM komsats ORDER BY nama')->fetchAll(PDO::FETCH_ASSOC),
             ];
         } catch (Throwable) {
-            return ['divisions' => [], 'commissions' => []];
+            return ['divisions' => self::formatDivisionOptions([]), 'commissions' => []];
         }
+    }
+
+    /** @param array<int, array<string, mixed>> $dbDivisions @return array<int, array<string, mixed>> */
+    public static function formatDivisionOptions(array $dbDivisions): array
+    {
+        $bpiItem = null;
+        $mediaItem = null;
+        $itItem = null;
+        $otherDivisions = [];
+
+        foreach ($dbDivisions as $div) {
+            $nama = trim((string) ($div['nama'] ?? ''));
+            $lower = strtolower($nama);
+
+            if ((stripos($lower, 'pengembangan sumber daya manusia') !== false || stripos($lower, 'pengembangan sdm') !== false || $lower === 'psdm') && !preg_match('/^divisi\b/i', $nama)) {
+                $nama = 'Divisi ' . $nama;
+                $div['nama'] = $nama;
+                $lower = strtolower($nama);
+            }
+
+            if (stripos($lower, 'badan pengurus inti') !== false || $lower === 'bpi') {
+                $bpiItem = $div;
+            } elseif (stripos($lower, 'media dan creative') !== false || stripos($lower, 'media & creative') !== false) {
+                $mediaItem = $div;
+            } elseif (stripos($lower, 'it dan website') !== false || stripos($lower, 'it & website') !== false) {
+                $itItem = $div;
+            } else {
+                $otherDivisions[] = $div;
+            }
+        }
+
+        if ($bpiItem === null) {
+            $bpiItem = ['id' => 1, 'nama' => 'Badan Pengurus Inti', 'komsat_id' => 1];
+        }
+
+        if ($mediaItem === null) {
+            $mediaItem = ['id' => 101, 'nama' => 'Media dan Creative Wilayah', 'komsat_id' => (int) ($bpiItem['komsat_id'] ?? 1)];
+        }
+
+        if ($itItem === null) {
+            $itItem = ['id' => 102, 'nama' => 'IT dan Website Wilayah', 'komsat_id' => (int) ($bpiItem['komsat_id'] ?? 1)];
+        }
+
+        return array_merge([$bpiItem, $mediaItem, $itItem], $otherDivisions);
+    }
+
+    /** @param array<int, mixed> $rawDivisions @return array<int, string> */
+    public static function formatFilterDivisionNames(array $rawDivisions): array
+    {
+        $formattedDivs = [];
+        $bpiFound = false;
+
+        foreach ($rawDivisions as $divName) {
+            $nameStr = trim((string) $divName);
+            if ((stripos($nameStr, 'pengembangan sumber daya manusia') !== false || stripos($nameStr, 'pengembangan sdm') !== false || strtolower($nameStr) === 'psdm') && !preg_match('/^divisi\b/i', $nameStr)) {
+                $nameStr = 'Divisi ' . $nameStr;
+            }
+            $lower = strtolower($nameStr);
+            if (stripos($lower, 'badan pengurus inti') !== false || $lower === 'bpi') {
+                $formattedDivs[] = $nameStr;
+                $bpiFound = true;
+                $formattedDivs[] = 'Media dan Creative Wilayah';
+                $formattedDivs[] = 'IT dan Website Wilayah';
+            } elseif (
+                stripos($lower, 'media dan creative') === false &&
+                stripos($lower, 'media & creative') === false &&
+                stripos($lower, 'it dan website') === false &&
+                stripos($lower, 'it & website') === false
+            ) {
+                $formattedDivs[] = $nameStr;
+            }
+        }
+
+        if (!$bpiFound) {
+            array_unshift($formattedDivs, 'Badan Pengurus Inti', 'Media dan Creative Wilayah', 'IT dan Website Wilayah');
+        }
+
+        return array_values(array_unique($formattedDivs));
     }
 
     /** @param array<string, string|null> $filters @return array{0: string, 1: array<string, string|int>} */
@@ -287,7 +380,16 @@ class TeamMember
         $params = [];
 
         if (!empty($filters['division'])) {
-            $where[] = 'd.nama = :division';
+            $divFilter = (string) $filters['division'];
+            if ($divFilter === 'Media dan Creative Wilayah') {
+                $where[] = '(d.nama = :division OR t.divisi_id = 101)';
+            } elseif ($divFilter === 'IT dan Website Wilayah') {
+                $where[] = '(d.nama = :division OR t.divisi_id = 102)';
+            } elseif (stripos($divFilter, 'pengembangan sumber daya manusia') !== false || stripos($divFilter, 'psdm') !== false) {
+                $where[] = '(d.nama = :division OR d.nama = \'Pengembangan Sumber Daya Manusia\' OR d.nama LIKE \'%Pengembangan Sumber Daya Manusia%\' OR t.divisi_id = 103)';
+            } else {
+                $where[] = 'd.nama = :division';
+            }
             $params['division'] = (string) $filters['division'];
         }
 

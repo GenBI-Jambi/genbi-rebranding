@@ -2558,7 +2558,15 @@
         return json.data || { divisions: [], commissions: [] };
       }
     } catch (e) { /* fallback */ }
-    return { divisions: [], commissions: [] };
+    return {
+      divisions: [
+        { id: 1, nama: 'Badan Pengurus Inti' },
+        { id: 101, nama: 'Media dan Creative Wilayah' },
+        { id: 102, nama: 'IT dan Website Wilayah' },
+        { id: 103, nama: 'Divisi Pengembangan Sumber Daya Manusia' },
+      ],
+      commissions: [],
+    };
   }
 
   async function uploadTeamPhoto(event) {
