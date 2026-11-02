@@ -39,7 +39,7 @@ $itemJson = json_encode($item, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSO
     <aside class="editor-config-sidebar">
       <section class="config-card">
         <h2>Photo</h2>
-        <div class="member-preview-avatar" id="team-photo-preview"><?php if (!empty($item['photo'])): ?><img src="<?= $e($item['photo']) ?>" alt="<?= $e($item['name'] ?? '') ?>"><?php else: ?><?= $e(mb_substr((string) ($item['name'] ?? 'Member'), 0, 2)) ?><?php endif; ?></div><label class="config-field"><span>Photo URL</span><input id="team-photo" class="config-input" value="<?= $e($item['photo_raw'] ?? $item['photo'] ?? '') ?>"></label><label class="config-field"><span>Upload Photo</span><input class="config-input" id="team-photo-upload" type="file" accept="image/*"></label>
+        <div class="member-preview-avatar" id="team-photo-preview"><?php if (!empty($item['photo'])): ?><img src="<?= $e($item['photo']) ?>" alt="<?= $e($item['name'] ?? '') ?>"><?php else: ?><?= $e(mb_substr((string) ($item['name'] ?? 'Member'), 0, 2)) ?><?php endif; ?></div><label class="config-field"><span>Photo URL</span><input id="team-photo" class="config-input" value="<?= $e($item['photo_raw'] ?? $item['photo'] ?? '') ?>"></label><label class="config-field"><span>Upload Photo</span><input class="config-input" id="team-photo-upload" type="file" accept="image/*"><p class="mt-1 text-xs text-neutral-500">Menerima rasio 1:1 (persegi), 3:4 atau 4:5 (potret), dan 9:16 (potret HP). Maks 10MB.</p></label>
       </section>
       <section class="config-card">
         <h2>Visibility</h2><label class="config-field"><span>Tampilkan di Beranda</span><select id="team-show-home" class="config-input js-admin-custom-select">

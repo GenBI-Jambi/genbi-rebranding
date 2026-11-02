@@ -200,8 +200,44 @@ final class TeamMemberController
             return;
         }
 
-        if ($imageSize[0] !== $imageSize[1]) {
-            $response->json(['error' => 'Rasio foto harus 1:1 (lebar dan tinggi sama)'], 422);
+        $width = (int) $imageSize[0];
+        $height = (int) $imageSize[1];
+        if ($width <= 0 || $height <= 0) {
+            $response->json(['error' => 'Dimensi gambar tidak valid'], 422);
+            return;
+        }
+
+        // Tangani kemungkinan rotasi EXIF pada foto HP (Orientation 5, 6, 7, 8 menukar lebar & tinggi)
+        if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
+            $exif = @exif_read_data($tmp);
+            $orientation = (int) ($exif['Orientation'] ?? 1);
+            if (in_array($orientation, [5, 6, 7, 8], true)) {
+                [$width, $height] = [$height, $width];
+            }
+        }
+
+        $ratio = $width / $height;
+
+        // Tolak jika foto model landscape (melebar)
+        if ($ratio > 1.05) {
+            $response->json([
+                'error' => 'Foto model landscape (melebar) tidak diizinkan. Foto anggota harus berorientasi potret atau persegi dengan rasio 1:1, 3:4, 4:5, atau 9:16.',
+            ], 422);
+            return;
+        }
+
+        // Validasi rasio yang diizinkan:
+        // 1. Rasio 1:1 (persegi): rentang 0.88 - 1.05
+        // 2. Rasio 3:4 atau semiripan 3:4 seperti 4:5 (serta pas foto 2:3): rentang 0.62 - 0.88
+        // 3. Rasio 9:16 (potret smartphone / story): rentang 0.50 - 0.62
+        $is1to1 = ($ratio >= 0.88 && $ratio <= 1.05);
+        $is3to4or4to5 = ($ratio >= 0.62 && $ratio <= 0.88);
+        $is9to16 = ($ratio >= 0.50 && $ratio <= 0.62);
+
+        if (!$is1to1 && !$is3to4or4to5 && !$is9to16) {
+            $response->json([
+                'error' => 'Rasio foto (' . $width . 'x' . $height . ') tidak sesuai. Hanya menerima rasio 1:1 (persegi), 3:4 atau semiripannya seperti 4:5 (potret), dan 9:16 (potret smartphone).',
+            ], 422);
             return;
         }
 

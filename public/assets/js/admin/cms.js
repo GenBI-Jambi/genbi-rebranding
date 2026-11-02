@@ -1703,7 +1703,7 @@
             <h2>Photo</h2>
             <div class="member-preview-avatar" id="team-photo-preview">${item.photo ? `<img src="${escape(item.photo)}" alt="${escape(item.name)}" />` : Admin.initials(item.name || 'Member')}</div>
             ${control('Photo URL', `<input id="team-photo" class="config-input" value="${escape(item.photo_raw || item.photo || '')}" />`)}
-            ${control('Upload Photo', '<input class="config-input" id="team-photo-upload" type="file" accept="image/*" />')}
+            ${control('Upload Photo', '<input class="config-input" id="team-photo-upload" type="file" accept="image/*" /><p class="mt-1 text-xs text-neutral-500">Rasio yang diterima: 1:1 (persegi), 3:4 atau 4:5 (potret), dan 9:16 (potret HP). Maks 10MB.</p>') }
           </section>
           <section class="config-card"><h2>Visibility</h2>${control('Tampilkan di Beranda', selectControl({ id: 'team-show-home', value: item.show_on_home ? '1' : '0', options: [{ value: '1', label: 'Show' }, { value: '0', label: 'Hide' }] }))}</section>
           <button type="submit" class="btn btn-primary w-full">${isEdit ? 'Update Member' : 'Submit Member'}</button>
