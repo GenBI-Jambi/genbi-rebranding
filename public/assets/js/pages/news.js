@@ -4,7 +4,9 @@ const { newsDetailUrl, renderShell } = window.GenBIApp;
 const { createCustomSelect, observeFadeUp, unique } = window.GenBIUI;
 const API = window.GenBIAPI;
 
-renderShell('news');
+if (document.body.dataset.ssr !== 'true') {
+  renderShell('news');
+}
 observeFadeUp();
 
 // Check if SSR markup exists

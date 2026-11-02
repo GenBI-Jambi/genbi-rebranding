@@ -97,6 +97,9 @@ function mergeSiteSettings(base, override) {
 function renderHeader(activeKey) {
   const header = document.querySelector('#site-header');
   if (!header) return;
+  if (document.body.dataset.ssr === 'true' && header.querySelector('#site-header-shell')) {
+    return;
+  }
 
   const nav = navItems
     .map((item) => renderDesktopNavItem(item, activeKey))
@@ -147,7 +150,9 @@ function renderHeader(activeKey) {
             <a data-transition href="${adminUrl('dashboard')}" class="btn btn-secondary">Pratinjau Admin</a>
             <a data-transition href="${pageUrl('contact')}" class="btn btn-primary">Hubungi Kami ${icon('arrowRight')}</a>
           </div>
-          <button id="open-menu" class="btn-icon lg:hidden" aria-label="Open menu">${icon('menu')}</button>
+          <div class="lg:hidden flex items-center">
+            <button id="open-menu" class="btn-icon" aria-label="Open menu">${icon('menu')}</button>
+          </div>
         </div>
       </header>
     </div>
@@ -178,6 +183,9 @@ function renderHeader(activeKey) {
 function renderFooter() {
   const footer = document.querySelector('#site-footer');
   if (!footer) return;
+  if (document.body.dataset.ssr === 'true' && footer.querySelector('section')) {
+    return;
+  }
 
   footer.innerHTML = `
     <section class="border-t border-neutral-900/10 bg-blue-950 text-white">
