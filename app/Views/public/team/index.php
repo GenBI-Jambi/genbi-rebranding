@@ -100,13 +100,27 @@ $filterParams = array_filter([
         <?php else: ?>
           <span class="pager-button" aria-disabled="true">Sebelumnya</span>
         <?php endif; ?>
-        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-          <?php if ($i === $page): ?>
-            <span class="pager-button is-active" aria-current="page"><?= $i ?></span>
+        <?php
+        $paginationItems = [];
+        if ($totalPages <= 7) {
+            $paginationItems = range(1, $totalPages);
+        } elseif ($page <= 4) {
+            $paginationItems = [1, 2, 3, 4, 5, '...', $totalPages];
+        } elseif ($page >= $totalPages - 3) {
+            $paginationItems = [1, '...', $totalPages - 4, $totalPages - 3, $totalPages - 2, $totalPages - 1, $totalPages];
+        } else {
+            $paginationItems = [1, '...', $page - 1, $page, $page + 1, '...', $totalPages];
+        }
+        ?>
+        <?php foreach ($paginationItems as $item): ?>
+          <?php if ($item === '...'): ?>
+            <span class="pager-ellipsis" aria-hidden="true">&hellip;</span>
+          <?php elseif ($item === $page): ?>
+            <span class="pager-button is-active" aria-current="page"><?= $item ?></span>
           <?php else: ?>
-            <a class="pager-button" href="/team?<?= $e(Paginator::buildQuery($i, $filterParams)) ?>"><?= $i ?></a>
+            <a class="pager-button" href="/team?<?= $e(Paginator::buildQuery((int) $item, $filterParams)) ?>"><?= $item ?></a>
           <?php endif; ?>
-        <?php endfor; ?>
+        <?php endforeach; ?>
         <?php if ($page < $totalPages): ?>
           <a class="pager-button" href="/team?<?= $e(Paginator::buildQuery($page + 1, $filterParams)) ?>">Berikutnya</a>
         <?php else: ?>

@@ -159,20 +159,39 @@ function renderNews() {
   renderPagination(totalPages);
 }
 
+function getPaginationItems(current, total) {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, '...', total];
+  }
+  if (current >= total - 3) {
+    return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total];
+}
+
 function renderPagination(totalPages) {
   if (!pagination) return;
   if (totalPages <= 1) {
     pagination.innerHTML = '';
     return;
   }
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const items = getPaginationItems(state.page, totalPages);
   pagination.innerHTML = `
-    <button class="pager-button" type="button" data-page="${Math.max(1, state.page - 1)}" ${state.page === 1 ? 'disabled' : ''}>Sebelumnya</button>
-    ${pages.map((page) => `<button class="pager-button ${page === state.page ? 'is-active' : ''}" type="button" data-page="${page}">${page}</button>`).join('')}
-    <button class="pager-button" type="button" data-page="${Math.min(totalPages, state.page + 1)}" ${state.page === totalPages ? 'disabled' : ''}>Berikutnya</button>
+    <button class="pager-button" type="button" data-page="${Math.max(1, state.page - 1)}" ${state.page === 1 ? 'disabled aria-disabled="true"' : ''}>Sebelumnya</button>
+    ${items.map((item) => {
+      if (item === '...') {
+        return `<span class="pager-ellipsis" aria-hidden="true">&hellip;</span>`;
+      }
+      return `<button class="pager-button ${item === state.page ? 'is-active' : ''}" type="button" data-page="${item}" ${item === state.page ? 'aria-current="page"' : ''}>${item}</button>`;
+    }).join('')}
+    <button class="pager-button" type="button" data-page="${Math.min(totalPages, state.page + 1)}" ${state.page === totalPages ? 'disabled aria-disabled="true"' : ''}>Berikutnya</button>
   `;
   pagination.querySelectorAll('[data-page]').forEach((button) => {
     button.addEventListener('click', () => {
+      if (button.disabled || button.getAttribute('aria-disabled') === 'true') return;
       state.page = Number(button.dataset.page) || 1;
       renderNews();
       list.scrollIntoView({ behavior: 'smooth', block: 'start' });
