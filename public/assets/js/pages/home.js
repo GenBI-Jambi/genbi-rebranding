@@ -189,10 +189,13 @@ async function renderBPIList() {
         <img src="${member.photo || member.image}" alt="Foto ${member.name}" loading="lazy" onload="this.previousElementSibling.classList.add('is-hidden')" onerror="this.classList.add('is-hidden'); this.previousElementSibling.classList.remove('is-hidden')" />
       </figure>
       <div class="bpi-slide-content">
-        <span class="bpi-number mx-auto">${String(index + 1).padStart(2, '0')}</span>
-        <h3>${member.name}</h3>
-        <p>${member.role}</p>
-        <span class="blue-badge mx-auto mt-5">${member.commission}</span>
+        <div class="bpi-slide-header">
+          <h3 class="bpi-slide-name">${member.name}</h3>
+          <p class="bpi-slide-role">${member.role}</p>
+        </div>
+        <div class="bpi-slide-footer">
+          <span class="blue-badge"><span class="bpi-badge-dot" aria-hidden="true"></span>${member.commission || member.komsat || 'GenBI Wilayah'}</span>
+        </div>
       </div>
     </article>
   `).join('');

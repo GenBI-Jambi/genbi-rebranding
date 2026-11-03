@@ -4774,8 +4774,8 @@ input[type="file"].config-input::file-selector-button:hover {
 }
 
 .program-slide-card h3,
-.event-slide-card h3,
-.bpi-slide-card h3 {
+.event-slide-card h3 {
+
   font-family: 'Source Serif 4', Georgia, serif;
   color: #171717;
   font-size: clamp(1.85rem, 3.2vw, 2.55rem);
@@ -4785,8 +4785,8 @@ input[type="file"].config-input::file-selector-button:hover {
 }
 
 .program-slide-card p:not(.slide-kicker),
-.event-slide-card p,
-.bpi-slide-card p {
+.event-slide-card p {
+
   max-width: 29rem;
   margin-top: 0.9rem;
   color: #525252;
@@ -4794,8 +4794,8 @@ input[type="file"].config-input::file-selector-button:hover {
   line-height: 1.75;
 }
 
-.event-slide-card p,
-.bpi-slide-card p {
+.event-slide-card p {
+
   margin-inline: auto;
 }
 
@@ -4880,7 +4880,7 @@ input[type="file"].config-input::file-selector-button:hover {
 }
 
 .bpi-slide-photo {
-  aspect-ratio: 1 / 1.08;
+/* old aspect-ratio */
   background: linear-gradient(180deg, #fff, #f3f7fd);
   overflow: hidden;
 }
@@ -4894,17 +4894,191 @@ input[type="file"].config-input::file-selector-button:hover {
   transition: transform 420ms ease;
 }
 
-.bpi-slide-card:hover .bpi-slide-photo img { transform: scale(1.06); }
+/* ==========================================================================
+   BPI SLIDE CARD - 2026 SCHOLARSHIP EDITORIAL REDESIGN
+   ========================================================================== */
+.bpi-slide-card {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 0 0 min(80vw, 315px) !important;
+  height: auto;
+  align-self: stretch;
+  background: #ffffff;
+  border: 1px solid rgb(17 75 154 / 0.12);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 28px -4px rgba(17, 75, 154, 0.07), 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 260ms ease;
+}
+
+.bpi-slide-card:hover {
+  transform: translateY(-5px);
+  border-color: rgb(17 75 154 / 0.28);
+  box-shadow: 0 24px 48px -6px rgba(17, 75, 154, 0.15), 0 6px 14px -3px rgba(17, 75, 154, 0.06);
+}
+
+.bpi-slide-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1.05;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f6fd 100%);
+  overflow: hidden;
+  margin: 0;
+}
+
+.bpi-slide-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transform: scale(1.01);
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bpi-slide-card:hover .bpi-slide-photo img {
+  transform: scale(1.05);
+}
+
+.bpi-slide-photo::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 28%;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.18) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
 
 .bpi-slide-content {
-  min-height: 210px;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 175px;
+  padding: 1.25rem 1.25rem 1.25rem;
+  text-align: center;
+  justify-content: space-between;
+  background: #ffffff;
+}
+
+.bpi-slide-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.bpi-slide-name,
+.bpi-slide-content h3 {
+  font-family: 'Source Serif 4', Georgia, serif !important;
+  font-size: 1.25rem !important;
+  line-height: 1.32 !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+  min-height: 3.3rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.bpi-slide-role,
+.bpi-slide-content p {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif !important;
+  font-size: 0.84rem !important;
+  line-height: 1.4 !important;
+  font-weight: 500 !important;
+  color: #475569 !important;
+  margin: 0.35rem 0 0 0 !important;
+  max-width: 100% !important;
+  min-height: 2.35rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.bpi-slide-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.bpi-slide-footer .blue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: #f0f7ff;
+  color: #0c3572;
+  border: 1px solid #d4e7fe;
+  font-size: 0.76rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  transition: all 180ms ease;
+  margin: 0 !important;
+}
+
+.bpi-slide-card:hover .bpi-slide-footer .blue-badge {
+  background: #e2efff;
+  color: #082855;
+  border-color: #bfdcfe;
+}
+
+.bpi-badge-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #155bb8;
+}
+
+html[data-theme^="dark-"] .bpi-slide-card {
+  background: rgb(var(--surface-raised, 30 41 59));
+  border-color: rgb(var(--border-subtle, 255 255 255) / 0.12);
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.4);
+}
+html[data-theme^="dark-"] .bpi-slide-content {
+  background: rgb(var(--surface-raised, 30 41 59));
+}
+html[data-theme^="dark-"] .bpi-slide-name,
+html[data-theme^="dark-"] .bpi-slide-content h3 {
+  color: rgb(var(--text-primary, 248 250 252)) !important;
+}
+html[data-theme^="dark-"] .bpi-slide-role,
+html[data-theme^="dark-"] .bpi-slide-content p {
+  color: rgb(var(--text-secondary, 148 163 184)) !important;
+}
+html[data-theme^="dark-"] .bpi-slide-footer {
+  border-top-color: rgb(var(--border-subtle, 255 255 255) / 0.1);
+}
+
+.bpi-slide-content {
+/* old min-height */
   padding: 1.35rem 1.25rem 1.55rem;
   text-align: center;
 }
 
 .bpi-slide-content h3 {
   margin-top: 0.9rem;
-  font-size: 1.65rem;
+/* old font-size */
 }
 
 .bpi-slide-content p {

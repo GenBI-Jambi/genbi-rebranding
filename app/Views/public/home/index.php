@@ -252,10 +252,13 @@ $eventIconMarkup = static function (string $type): string {
                 <img src="<?= $e($photo) ?>" alt="Foto <?= $e((string) ($member['name'] ?? 'Anggota BPI')) ?>" loading="lazy" onload="this.previousElementSibling.classList.add('is-hidden')" onerror="this.classList.add('is-hidden'); this.previousElementSibling.classList.remove('is-hidden')" />
               </figure>
               <div class="bpi-slide-content">
-                <span class="bpi-number mx-auto"><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></span>
-                <h3><?= $e((string) ($member['name'] ?? '')) ?></h3>
-                <p><?= $e((string) ($member['role'] ?? '')) ?></p>
-                <span class="blue-badge mx-auto mt-5"><?= $e((string) ($member['commission'] ?? $member['komsat'] ?? '')) ?></span>
+                <div class="bpi-slide-header">
+                  <h3 class="bpi-slide-name"><?= $e((string) ($member['name'] ?? '')) ?></h3>
+                  <p class="bpi-slide-role"><?= $e((string) ($member['role'] ?? '')) ?></p>
+                </div>
+                <div class="bpi-slide-footer">
+                  <span class="blue-badge"><span class="bpi-badge-dot" aria-hidden="true"></span><?= $e((string) ($member['commission'] ?? $member['komsat'] ?? 'GenBI Wilayah')) ?></span>
+                </div>
               </div>
             </article>
           <?php endforeach; ?>
