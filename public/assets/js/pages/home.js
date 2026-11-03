@@ -2,11 +2,21 @@
 'use strict';
 const { newsDetailUrl, pageUrl, renderShell } = window.GenBIApp;
 const { observeFadeUp } = window.GenBIUI;
-const { site, stats, programs, news, bpiMembers, publicEvents } = window.GenBIData;
+const { site: fallbackSite, stats, programs, news, bpiMembers, publicEvents } = window.GenBIData;
 const API = window.GenBIAPI;
+const site = {
+  ...fallbackSite,
+  ...(window.GenBISiteSettings || {}),
+  heroSlides: Array.isArray(window.GenBISiteSettings?.heroSlides) && window.GenBISiteSettings.heroSlides.length
+    ? window.GenBISiteSettings.heroSlides
+    : fallbackSite.heroSlides,
+  sidebar: { ...(fallbackSite.sidebar || {}), ...(window.GenBISiteSettings?.sidebar || {}) },
+  colors: { ...(fallbackSite.colors || {}), ...(window.GenBISiteSettings?.colors || {}) },
+};
 
 renderShell('home');
 renderHero();
+renderAnnouncements();
 renderStats();
 renderPrograms();
 renderBPIList();
@@ -25,10 +35,14 @@ function renderHero() {
   const caption = document.querySelector('#hero-caption');
   if (!slider) return;
 
-  slider.innerHTML = site.heroSlides.map((slide, index) => `
-    <img src="${slide.image}" alt="${slide.caption}" class="hero-image hero-bg-image ${index === 0 ? 'is-active' : ''}" />
-  `).join('');
-  dots.innerHTML = site.heroSlides.map((_, index) => `<button class="h-2.5 w-2.5 rounded-full bg-white/40 transition hover:bg-white ${index === 0 ? 'bg-white' : ''}" aria-label="Slide ${index + 1}" data-slide="${index}"></button>`).join('');
+  if (slider.dataset.ssr !== 'true' || !slider.children.length) {
+    slider.innerHTML = site.heroSlides.map((slide, index) => `
+      <img src="${slide.image}" alt="${slide.caption}" class="hero-image hero-bg-image ${index === 0 ? 'is-active' : ''}" />
+    `).join('');
+  }
+  if (dots && (dots.dataset.ssr !== 'true' || !dots.children.length)) {
+    dots.innerHTML = site.heroSlides.map((_, index) => `<button class="h-2.5 w-2.5 rounded-full bg-white/40 transition hover:bg-white ${index === 0 ? 'bg-white' : ''}" aria-label="Slide ${index + 1}" data-slide="${index}"></button>`).join('');
+  }
   let active = 0;
   const update = (index) => {
     active = index;
@@ -48,8 +62,48 @@ function renderHero() {
   window.setInterval(() => update((active + 1) % site.heroSlides.length), 6500);
 }
 
+function formatAnnouncementDate(value) {
+  if (!value) return 'Terbaru';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function truncateAnnouncement(text = '', limit = 150) {
+  const clean = String(text).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  return clean.length > limit ? `${clean.slice(0, limit).trim()}…` : clean;
+}
+
+function renderAnnouncements() {
+  const root = document.querySelector('#home-announcements');
+  const section = document.querySelector('[data-announcement-section]') || root?.closest('.announcement-hero-section');
+  if (!root) return;
+  if (root.dataset.ssr === 'true' && root.children.length) return;
+
+  const announcements = news
+    .filter((item) => String(item.category || '').toLowerCase() === 'pengumuman')
+    .slice(0, 8);
+
+  if (!announcements.length) {
+    if (section) section.hidden = true;
+    return;
+  }
+
+  root.classList.toggle('is-centered', announcements.length <= 2);
+
+  root.innerHTML = announcements.map((item, index) => `
+    <a data-transition href="${newsDetailUrl(item)}" class="announcement-card" aria-label="Baca pengumuman: ${item.title}">
+      <span class="announcement-number">${String(index + 1).padStart(2, '0')}</span>
+      <span class="announcement-date">${formatAnnouncementDate(item.date)}</span>
+      <h3>${item.title}</h3>
+      <p>${truncateAnnouncement(item.excerpt || (Array.isArray(item.body) ? item.body.join(' ') : ''))}</p>
+    </a>
+  `).join('');
+}
+
 function renderStats() {
   const root = document.querySelector('#stats-row');
+  if (!root || (root.dataset.ssr === 'true' && root.children.length)) return;
   root.innerHTML = stats.map((item) => `
     <div class="fade-up">
       <p class="serif text-4xl font-semibold tracking-tight text-neutral-950">${item.value}</p>
@@ -69,22 +123,60 @@ function programIcon(title = '') {
 
 function renderPrograms() {
   const root = document.querySelector('#program-list');
-  root.innerHTML = programs.map((program, index) => `
-    <article class="editorial-slide-card program-slide-card" role="group" aria-roledescription="slide" aria-label="Program ${index + 1} dari ${programs.length}">
-      <span class="slide-index">${String(index + 1).padStart(2, '0')}</span>
-      <span class="program-icon mx-auto">${programIcon(program.title)}</span>
-      <p class="slide-kicker">${program.title}</p>
-      <h3>${program.name}</h3>
-      <p>${program.description}</p>
-      <span class="blue-badge mx-auto mt-5">${program.focus}</span>
-    </article>
-  `).join('');
+  if (!root) return;
+  if (root.dataset.ssr === 'true' && root.children.length) {
+    hydrateProgramCards(root);
+    return;
+  }
+
+  root.innerHTML = programs.map((program, index) => {
+    const images = Array.isArray(program.images) && program.images.length ? program.images : [site.heroSlides[0]?.image || 'https://genbijambi.com/public/uploads/slider-1.png'];
+    const focusBadge = program.focus ? `<span class="blue-badge mx-auto mt-5">${program.focus}</span>` : '';
+    return `
+      <article class="editorial-slide-card program-slide-card" role="group" aria-roledescription="slide" aria-label="Program ${index + 1} dari ${programs.length}" data-program-slides='${JSON.stringify(images)}' style="--program-bg-image: url('${images[0]}');">
+        <span class="slide-index">${String(index + 1).padStart(2, '0')}</span>
+        <span class="program-icon mx-auto">${window.GenBIApp.icon(program.icon_key || 'sparkles', 'program-icon-svg')}</span>
+        <p class="slide-kicker">${program.title}</p>
+        <h3>${program.name}</h3>
+        <p>${program.description}</p>
+        ${focusBadge}
+      </article>
+    `;
+  }).join('');
+  hydrateProgramCards(root);
+}
+
+function hydrateProgramCards(root) {
+  root.querySelectorAll('.program-slide-card').forEach((card) => {
+    const iconTarget = card.querySelector('[data-program-icon]');
+    if (iconTarget) {
+        const iconKey = iconTarget.dataset.programIcon || 'sparkles';
+        iconTarget.innerHTML = window.GenBIApp.icon(iconKey, 'program-icon-svg');
+    } else {
+      const existingIcon = card.querySelector('.program-icon');
+      if (existingIcon && !existingIcon.innerHTML.trim()) {
+        existingIcon.innerHTML = window.GenBIApp.icon('sparkles', 'program-icon-svg');
+      }
+    }
+
+    const slides = JSON.parse(card.dataset.programSlides || '[]').filter(Boolean);
+    if (!slides.length) return;
+    card.style.setProperty('--program-bg-image', `url('${slides[0]}')`);
+    if (slides.length <= 1) return;
+
+    let active = 0;
+    window.setInterval(() => {
+      active = (active + 1) % slides.length;
+      card.style.setProperty('--program-bg-image', `url('${slides[active]}')`);
+    }, 4200);
+  });
 }
 
 
 async function renderBPIList() {
   const root = document.querySelector('#bpi-list');
   if (!root) return;
+  if (root.dataset.ssr === 'true' && root.children.length) return;
   let members = bpiMembers;
   try {
     const payload = await API.getTeamList({ per_page: 200 });
@@ -97,10 +189,13 @@ async function renderBPIList() {
         <img src="${member.photo || member.image}" alt="Foto ${member.name}" loading="lazy" onload="this.previousElementSibling.classList.add('is-hidden')" onerror="this.classList.add('is-hidden'); this.previousElementSibling.classList.remove('is-hidden')" />
       </figure>
       <div class="bpi-slide-content">
-        <span class="bpi-number mx-auto">${String(index + 1).padStart(2, '0')}</span>
-        <h3>${member.name}</h3>
-        <p>${member.role}</p>
-        <span class="blue-badge mx-auto mt-5">${member.commission}</span>
+        <div class="bpi-slide-header">
+          <h3 class="bpi-slide-name">${member.name}</h3>
+          <p class="bpi-slide-role">${member.role}</p>
+        </div>
+        <div class="bpi-slide-footer">
+          <span class="blue-badge"><span class="bpi-badge-dot" aria-hidden="true"></span>${member.commission || member.komsat || 'GenBI Wilayah'}</span>
+        </div>
       </div>
     </article>
   `).join('');
@@ -119,22 +214,43 @@ function eventIcon(type) {
   return map[type] || map.calendar;
 }
 
-function renderHomeEvents() {
+async function renderHomeEvents() {
   const root = document.querySelector('#home-events');
   if (!root) return;
-  root.innerHTML = publicEvents.map((event, index) => `
-    <article class="editorial-slide-card event-slide-card" role="group" aria-roledescription="slide" aria-label="Agenda ${index + 1} dari ${publicEvents.length}">
-      <span class="event-icon mx-auto">${eventIcon(event.icon)}</span>
-      <div class="event-meta justify-center"><span>${event.type}</span><span>${event.date}</span></div>
+  if (root.dataset.ssr === 'true' && root.children.length) {
+    hydrateProgramCards(root);
+    return;
+  }
+  let agendaItems = publicEvents;
+  try {
+    const payload = await API.getEventList();
+    if (Array.isArray(payload) && payload.length) agendaItems = payload;
+  } catch (e) { /* fallback */ }
+
+  root.innerHTML = agendaItems.map((event, index) => {
+    const slides = Array.isArray(event.images) && event.images.length
+      ? event.images
+      : [site.heroSlides[index % site.heroSlides.length]?.image || site.heroSlides[0]?.image || 'https://genbijambi.com/public/uploads/slider-1.png'];
+    const type = event.type || event.category || 'Agenda Komunitas';
+    const date = event.date || event.start_date || event.start || '-';
+    const description = event.description || event.excerpt || '';
+    return `
+    <article class="editorial-slide-card program-slide-card agenda-slide-card" role="group" aria-roledescription="slide" aria-label="Agenda ${index + 1} dari ${agendaItems.length}" data-program-slides='${JSON.stringify(slides)}' style="--program-bg-image: url('${slides[0]}');">
+      <span class="slide-index">${String(index + 1).padStart(2, '0')}</span>
+      <span class="program-icon mx-auto">${eventIcon(event.icon || 'calendar')}</span>
+      <p class="slide-kicker">${type}</p>
       <h3>${event.title}</h3>
-      <p>${event.description}</p>
+      <p>${description}</p>
+      <span class="blue-badge mx-auto mt-5">${date}</span>
     </article>
-  `).join('');
+  `;
+  }).join('');
+  hydrateProgramCards(root);
 }
 
 function renderHomeContact() {
   const root = document.querySelector('#home-contact-card');
-  if (!root) return;
+  if (!root || (root.dataset.ssr === 'true' && root.children.length)) return;
   root.innerHTML = `
     <div>
       <p class="eyebrow">Contact us</p>
@@ -155,6 +271,8 @@ function renderHomeContact() {
 
 function renderHomeNews() {
   const root = document.querySelector('#home-news');
+  if (!root) return;
+  if (root.dataset.ssr === 'true' && root.children.length) return;
   root.innerHTML = news.slice(0, 3).map((item) => `
     <a data-transition href="${newsDetailUrl(item)}" class="home-news-card">
       <figure class="home-news-media"><img src="${item.image}" alt="${item.title}" loading="lazy" onerror="this.src='https://genbijambi.com/public/uploads/slider-1.png'" /></figure>
@@ -177,7 +295,7 @@ function setupHorizontalCarousels() {
     if (!track || !previous || !next) return;
 
     const getDistance = () => {
-      const firstCard = track.querySelector('.editorial-slide-card');
+      const firstCard = track.querySelector('.editorial-slide-card, .announcement-card');
       if (!firstCard) return track.clientWidth * 0.85;
       const styles = window.getComputedStyle(track);
       const gap = parseFloat(styles.columnGap || styles.gap || '0') || 0;

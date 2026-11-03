@@ -1,15 +1,74 @@
 (function(){
 'use strict';
 const { renderShell } = window.GenBIApp;
-const { createModalController } = window.GenBIUI;
+const { createModalController, observeFadeUp } = window.GenBIUI;
 const API = window.GenBIAPI;
 const { news } = window.GenBIData;
 
 renderShell('prestasi');
+
+// Check if SSR markup exists - if so, bind layout toggle and modal open
+const ssrList = document.querySelector('#prestasi-list[data-ssr="true"]');
+if (ssrList) {
+  document.body.classList.add('page-ready');
+  observeFadeUp(); // Trigger fade-up animations
+  ensurePrestasiModal();
+  const prestasiModalCtrl = createModalController(document.querySelector('#prestasi-modal'));
+
+  // Bind layout toggle buttons
+  document.querySelectorAll('[data-prestasi-layout]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const layout = button.dataset.prestasiLayout || 'list';
+      document.querySelectorAll('[data-prestasi-layout]').forEach((item) => item.classList.toggle('is-active', item === button));
+      ssrList.className = layout === 'grid' ? 'prestasi-grid' : 'soft-card overflow-hidden prestasi-list';
+    });
+  });
+
+  // Bind item click to open modal with data from attributes
+  ssrList.querySelectorAll('[data-id]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const item = {
+        title: button.dataset.title || '',
+        name: button.dataset.name || '',
+        campus: button.dataset.campus || '',
+        category: button.dataset.category || '',
+        year: button.dataset.year || '',
+        description: button.dataset.description || '',
+        detail: button.dataset.detail || button.dataset.description || '',
+        image: button.dataset.image || '',
+        institution: button.dataset.institution || '',
+      };
+      const fallbackImage = news[Number(button.dataset.index) % news.length]?.image || 'https://genbijambi.com/public/uploads/slider-1.png';
+      const image = item.image || fallbackImage;
+      prestasiModalCtrl.open({ content: `
+        <div class="public-modal-panel prestasi-detail-panel modal-panel is-open" role="dialog" aria-modal="true" aria-labelledby="prestasi-title">
+          <button class="btn-icon modal-close" aria-label="Tutup detail prestasi">×</button>
+          <figure class="prestasi-detail-image">
+            <img src="${image}" alt="Dokumentasi ${item.title}" onerror="this.src='${fallbackImage}'" />
+          </figure>
+          <div class="prestasi-detail-copy">
+            <p class="eyebrow">Detail prestasi</p>
+            <h2 id="prestasi-title" class="serif mt-3 text-3xl font-semibold tracking-tight text-neutral-950 md:text-5xl">${item.title}</h2>
+            <p class="mt-4 text-base leading-7 text-neutral-600">${item.description}</p>
+            <div class="prestasi-detail-meta">
+              <p><span>Nama</span><strong>${item.name}</strong></p>
+              <p><span>Kampus</span><strong>${item.campus}</strong></p>
+              <p><span>Kategori</span><strong>${item.category}</strong></p>
+              <p><span>Tahun</span><strong>${item.year}</strong></p>
+            </div>
+            <p class="mt-5 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-950">${item.detail || item.description}</p>
+          </div>
+        </div>
+      ` });
+    });
+  });
+  return;
+}
+
 ensurePrestasiModal();
 
 let prestasi = [];
-let layout = 'list';
+let layout = 'grid';
 const list = document.querySelector('#prestasi-list');
 const prestasiModal = createModalController(document.querySelector('#prestasi-modal'));
 
@@ -72,6 +131,7 @@ function renderPrestasi() {
     image.addEventListener('error', () => imageFallback(image, item, index));
   });
   list.querySelectorAll('[data-id]').forEach((button) => button.addEventListener('click', () => openPrestasi(Number(button.dataset.id))));
+  observeFadeUp(); // Trigger fade-up animations after rendering
 }
 
 function renderListItem(item, index) {

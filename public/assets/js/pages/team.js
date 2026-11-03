@@ -7,6 +7,37 @@ const API = window.GenBIAPI;
 renderShell('team');
 observeFadeUp();
 
+// Check if SSR markup exists - if so, only bind layout toggle and search form
+const ssrTeamList = document.querySelector('#team-list[data-ssr="true"]');
+if (ssrTeamList) {
+  document.body.classList.add('page-ready');
+  // Bind layout toggle
+  const gridBtn = document.querySelector('#team-layout-grid');
+  const listBtn = document.querySelector('#team-layout-list');
+  gridBtn?.addEventListener('click', () => {
+    ssrTeamList.className = 'fade-up team-public-grid in-view';
+    gridBtn.classList.add('is-active');
+    listBtn?.classList.remove('is-active');
+  });
+  listBtn?.addEventListener('click', () => {
+    ssrTeamList.className = 'fade-up team-public-list in-view';
+    listBtn.classList.add('is-active');
+    gridBtn?.classList.remove('is-active');
+  });
+  // Bind search form Enter key
+  const filterForm = document.querySelector('#team-filter-form');
+  const searchInput = document.querySelector('#team-search');
+  if (searchInput && filterForm) {
+    searchInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        filterForm.submit();
+      }
+    });
+  }
+  return;
+}
+
 let teamMembers = [];
 let filterOptions = { divisions: [], campuses: [], years: [] };
 let state = {
@@ -181,20 +212,39 @@ function renderListCard(member) {
   `;
 }
 
+function getPaginationItems(current, total) {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, '...', total];
+  }
+  if (current >= total - 3) {
+    return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total];
+}
+
 function renderPagination(totalPages) {
   if (!pagination) return;
   if (totalPages <= 1) {
     pagination.innerHTML = '';
     return;
   }
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const items = getPaginationItems(state.page, totalPages);
   pagination.innerHTML = `
-    <button class="pager-button" type="button" data-page="${Math.max(1, state.page - 1)}" ${state.page === 1 ? 'disabled' : ''}>Sebelumnya</button>
-    ${pages.map((page) => `<button class="pager-button ${page === state.page ? 'is-active' : ''}" type="button" data-page="${page}">${page}</button>`).join('')}
-    <button class="pager-button" type="button" data-page="${Math.min(totalPages, state.page + 1)}" ${state.page === totalPages ? 'disabled' : ''}>Berikutnya</button>
+    <button class="pager-button" type="button" data-page="${Math.max(1, state.page - 1)}" ${state.page === 1 ? 'disabled aria-disabled="true"' : ''}>Sebelumnya</button>
+    ${items.map((item) => {
+      if (item === '...') {
+        return `<span class="pager-ellipsis" aria-hidden="true">&hellip;</span>`;
+      }
+      return `<button class="pager-button ${item === state.page ? 'is-active' : ''}" type="button" data-page="${item}" ${item === state.page ? 'aria-current="page"' : ''}>${item}</button>`;
+    }).join('')}
+    <button class="pager-button" type="button" data-page="${Math.min(totalPages, state.page + 1)}" ${state.page === totalPages ? 'disabled aria-disabled="true"' : ''}>Berikutnya</button>
   `;
   pagination.querySelectorAll('[data-page]').forEach((button) => {
     button.addEventListener('click', () => {
+      if (button.disabled || button.getAttribute('aria-disabled') === 'true') return;
       state.page = Number(button.dataset.page) || 1;
       updateUrlState();
       renderTeam();
