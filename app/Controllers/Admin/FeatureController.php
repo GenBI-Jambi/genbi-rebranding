@@ -13,7 +13,16 @@ final class FeatureController
     private const UPLOAD_DIR = '/uploads/features/';
     private const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    private const ICON_KEYS = ['sparkles', 'users', 'bank', 'chart', 'academic', 'calendar', 'heart', 'news', 'grid'];
+    private const ICON_KEYS = [
+        'sparkles', 'star', 'bolt', 'fire', 'rocket', 'trophy', 'flag', 'bookmark', 'tag', 'gift', 'heart',
+        'users', 'user', 'userGroup', 'userCircle', 'userPlus', 'identification', 'handRaised', 'handThumbUp', 'chatBubble', 'chatBubbleLeftRight',
+        'academic', 'academicCap', 'bookOpen', 'lightBulb', 'beaker', 'puzzlePiece', 'commandLine', 'codeBracket', 'cpuChip', 'computerDesktop',
+        'bank', 'banknotes', 'wallet', 'creditCard', 'receiptPercent', 'scale', 'chart', 'chartBar', 'chartPie', 'arrowTrendingUp', 'presentationChart',
+        'calendar', 'calendarDays', 'clock', 'ticket', 'mapPin', 'map', 'building', 'home', 'briefcase', 'shoppingBag', 'truck',
+        'news', 'newspaper', 'document', 'documentText', 'clipboardDocument', 'archiveBox', 'folder', 'pencilSquare', 'printer', 'envelope', 'envelopeOpen', 'atSymbol',
+        'gallery', 'photo', 'camera', 'film', 'videoCamera', 'playCircle', 'tv', 'megaphone', 'microphone', 'speakerWave', 'radio', 'rss', 'share', 'paperAirplane',
+        'globe', 'link', 'wifi', 'cloud', 'qrCode', 'magnifyingGlass', 'eye', 'grid', 'squares', 'shield', 'lockClosed', 'key', 'settings', 'cog6Tooth', 'server', 'swatch', 'paintBrush',
+    ];
 
     public function __construct(private ?Feature $feature = null)
     {
@@ -76,7 +85,8 @@ final class FeatureController
 
         $id = $this->feature->create($this->sanitizePayload($body));
         if ($id <= 0) {
-            $response->json(['error' => 'Gagal menyimpan Program Utama'], 500);
+            $details = $this->feature->getLastError() ?: 'Gagal menyimpan Program Utama ke database.';
+            $response->json(['error' => 'Gagal menyimpan Program Utama', 'details' => [$details]], 500);
             return;
         }
 
@@ -100,7 +110,8 @@ final class FeatureController
 
         $success = $this->feature->update($id, $this->sanitizePayload($body, false));
         if (!$success) {
-            $response->json(['error' => 'Gagal memperbarui Program Utama'], 404);
+            $details = $this->feature->getLastError() ?: 'Gagal memperbarui Program Utama.';
+            $response->json(['error' => 'Gagal memperbarui Program Utama', 'details' => [$details]], 500);
             return;
         }
 
@@ -179,8 +190,11 @@ final class FeatureController
                 $errors[] = 'Nama Program Utama wajib diisi.';
             }
         }
-        if (array_key_exists('icon_key', $body) && !in_array((string) $body['icon_key'], self::ICON_KEYS, true)) {
-            $errors[] = 'Ikon Program Utama tidak valid.';
+        if (array_key_exists('icon_key', $body)) {
+            $iconKey = trim((string) $body['icon_key']);
+            if ($iconKey !== '' && !in_array($iconKey, self::ICON_KEYS, true) && !preg_match('/^[a-zA-Z0-9_-]{1,80}$/', $iconKey)) {
+                $errors[] = 'Ikon Program Utama tidak valid.';
+            }
         }
         if (array_key_exists('images', $body) && is_array($body['images'])) {
             foreach ($body['images'] as $image) {
@@ -215,6 +229,10 @@ final class FeatureController
                 continue;
             }
             $payload[$field] = strip_tags(mb_substr(trim((string) $body[$field]), 0, $limit));
+        }
+
+        if ($includeDefaults && (!isset($payload['icon_key']) || $payload['icon_key'] === '')) {
+            $payload['icon_key'] = 'sparkles';
         }
 
         if (array_key_exists('show_on_home', $body) || $includeDefaults) {

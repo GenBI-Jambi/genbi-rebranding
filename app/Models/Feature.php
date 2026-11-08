@@ -12,6 +12,12 @@ final class Feature
     /** @var array<int, string>|null */
     private ?array $featureColumns = null;
     private ?bool $featureImageTableExists = null;
+    private ?string $lastError = null;
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
+    }
 
     public function __construct(private ?PDO $db = null)
     {
@@ -137,10 +143,18 @@ final class Feature
             }
             $stmt->execute();
             $featureId = (int) $this->db->lastInsertId();
+            if ($featureId <= 0 && !empty($payload['name'])) {
+                $idCol = $this->featureIdColumn();
+                $find = $this->db->prepare("SELECT {$idCol} FROM tbl_feature WHERE name = :name ORDER BY {$idCol} DESC LIMIT 1");
+                $find->execute([':name' => $payload['name']]);
+                $featureId = (int) $find->fetchColumn();
+            }
             $this->syncImages($featureId, $images);
             $this->db->commit();
             return $featureId;
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            \App\Core\ErrorHandler::log($e);
             $this->db->rollBack();
             return 0;
         }
@@ -183,7 +197,9 @@ final class Feature
 
             $this->db->commit();
             return true;
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            \App\Core\ErrorHandler::log($e);
             $this->db->rollBack();
             return false;
         }
@@ -216,7 +232,9 @@ final class Feature
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->rowCount() > 0;
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            \App\Core\ErrorHandler::log($e);
             return false;
         }
     }
@@ -453,6 +471,13 @@ final class Feature
             $payload['status'] = in_array($status, ['draft', 'published', 'archived'], true) ? $status : 'draft';
         }
 
+        if ($this->hasFeatureColumn('content') && (array_key_exists('content', $data) || $includeDefaults)) {
+            $payload['content'] = (string) ($data['content'] ?? $payload['description'] ?? '');
+        }
+        if ($this->hasFeatureColumn('icon') && (array_key_exists('icon', $data) || $includeDefaults)) {
+            $payload['icon'] = (string) ($data['icon'] ?? $payload['icon_key'] ?? 'fa-star');
+        }
+
         if ($includeDefaults && $this->hasFeatureColumn('created_at')) {
             $payload['created_at'] = date('Y-m-d H:i:s');
         }
@@ -659,13 +684,17 @@ final class Feature
             $statement = $this->db->query('DESCRIBE tbl_feature');
             $this->featureColumns = $statement ? array_map('strval', array_column($statement->fetchAll(PDO::FETCH_ASSOC), 'Field')) : [];
             return $this->featureColumns;
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            \App\Core\ErrorHandler::log($e);
             try {
                 $statement = $this->db->query('PRAGMA table_info(tbl_feature)');
                 $rows = $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
                 $this->featureColumns = array_map('strval', array_column($rows, 'name'));
                 return $this->featureColumns;
-            } catch (Throwable) {
+            } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            \App\Core\ErrorHandler::log($e);
                 $this->featureColumns = [];
                 return $this->featureColumns;
             }
@@ -691,13 +720,17 @@ final class Feature
             $rows = $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
             $this->featureImageTableExists = $rows !== [];
             return $this->featureImageTableExists;
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            \App\Core\ErrorHandler::log($e);
             try {
                 $statement = $this->db->query('PRAGMA table_info(tbl_feature_image)');
                 $rows = $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
                 $this->featureImageTableExists = $rows !== [];
                 return $this->featureImageTableExists;
-            } catch (Throwable) {
+            } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            \App\Core\ErrorHandler::log($e);
                 $this->featureImageTableExists = false;
                 return false;
             }

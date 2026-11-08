@@ -28,9 +28,9 @@ $images = $isEdit ? ($item['images'] ?? []) : [];
       <div class="feature-editor-main">
         <section class="feature-story-card">
           <label class="feature-label" for="feature-title">Label Singkat</label>
-          <input id="feature-title" class="story-title-input" value="<?= $e($title) ?>" placeholder="Contoh: KKG" maxlength="120" />
+          <input id="feature-title" class="story-title-input" value="<?= $e($title) ?>" placeholder="Contoh: KKG" maxlength="120" required />
           <label class="feature-label mt-5" for="feature-name">Nama Program</label>
-          <input id="feature-name" class="story-name-input" value="<?= $e($name) ?>" placeholder="Nama Program Utama..." maxlength="255" />
+          <input id="feature-name" class="story-name-input" value="<?= $e($name) ?>" placeholder="Nama Program Utama..." maxlength="255" required />
           <div class="feature-grid mt-6">
             <div class="config-field">
               <span>Fokus</span>
@@ -83,11 +83,14 @@ $images = $isEdit ? ($item['images'] ?? []) : [];
         <section class="config-card medium-config-card">
           <h2>Ikon Program</h2>
           <div class="feature-icon-picker" id="feature-icon-picker" data-selected-icon="<?= $e($iconKey) ?>">
-            <button type="button" class="feature-icon-button" id="feature-icon-button">
+            <button type="button" class="feature-icon-button" id="feature-icon-button" aria-haspopup="dialog" aria-expanded="false" title="Pilih Ikon Program">
               <span class="feature-icon-button-preview" data-feature-icon-preview="<?= $e($iconKey) ?>"></span>
-              <span>
+              <span class="feature-icon-button-text">
                 <strong id="feature-icon-label"><?= $e($iconKey) ?></strong>
                 <small>Buka popup Heroicons tersegmentasi</small>
+              </span>
+              <span class="feature-icon-chevron" aria-hidden="true">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
               </span>
             </button>
           </div>

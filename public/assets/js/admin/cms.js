@@ -16,6 +16,15 @@
     API.getCsrfToken = () => csrfMeta;
   }
 
+  function formatApiError(payload, fallback = 'Terjadi kesalahan.') {
+    if (!payload) return fallback;
+    const base = payload.error || payload.message || fallback;
+    const details = Array.isArray(payload.details) && payload.details.length > 0
+      ? payload.details.join(', ')
+      : (typeof payload.details === 'string' && payload.details.trim() ? payload.details.trim() : '');
+    return details ? `${base}: ${details}` : base;
+  }
+
   function route(name, params = {}) {
     return Core.routeUrl(name, params, window.location);
   }
@@ -1335,7 +1344,7 @@
         Admin.showToast(isEdit ? 'Agenda diperbarui.' : 'Agenda ditambahkan.');
         if (!isEdit && json.data?.id) window.setTimeout(() => { window.location.href = `${adminUrl('event-edit')}?id=${json.data.id}`; }, 700);
       } else {
-        Admin.showToast(json.error || 'Gagal menyimpan agenda.');
+        Admin.showToast(formatApiError(json, 'Gagal menyimpan agenda.'));
       }
     });
   }
@@ -1370,7 +1379,7 @@
         Admin.showToast(isEdit ? 'Agenda diperbarui.' : 'Agenda ditambahkan.');
         if (!isEdit && json.data?.id) window.setTimeout(() => { window.location.href = `${adminUrl('event-edit')}?id=${json.data.id}`; }, 700);
       } else {
-        Admin.showToast(json.error || 'Gagal menyimpan agenda.');
+        Admin.showToast(formatApiError(json, 'Gagal menyimpan agenda.'));
       }
     });
   }
@@ -1845,11 +1854,11 @@
         </header>
         <div class="feature-icon-modal-tools">
           <label class="feature-icon-search">
-            <span>Search icon</span>
-            <input id="feature-icon-search" type="search" placeholder="Cari: bank, academic, calendar..." autocomplete="off" />
+            <span>Cari Ikon Heroicons</span>
+            <input id="feature-icon-search" type="search" placeholder="Cari ikon: bank, academic, calendar, sparkles..." autocomplete="off" />
           </label>
           <div class="feature-icon-segments" role="tablist" aria-label="Kategori ikon">
-            <button type="button" class="feature-icon-segment is-active" data-icon-group="all">All</button>
+            <button type="button" class="feature-icon-segment is-active" data-icon-group="all">Semua</button>
             ${programIconGroups.map((group) => `<button type="button" class="feature-icon-segment" data-icon-group="${escape(group.key)}">${escape(group.label)}</button>`).join('')}
           </div>
         </div>
@@ -1879,9 +1888,10 @@
       const source = activeGroup === 'all' ? allIcons : (groupedIcons[activeGroup] || []);
       const icons = source.filter((iconKey) => !query || iconKey.toLowerCase().includes(query));
       grid.innerHTML = icons.map((iconKey) => `
-        <button type="button" class="feature-icon-option ${selectedIcon === iconKey ? 'is-active' : ''}" data-icon-key="${iconKey}" aria-pressed="${selectedIcon === iconKey ? 'true' : 'false'}">
+        <button type="button" class="feature-icon-option ${selectedIcon === iconKey ? 'is-active' : ''}" data-icon-key="${iconKey}" aria-pressed="${selectedIcon === iconKey ? 'true' : 'false'}" title="${escape(iconKey)}">
           <span class="feature-icon-option-preview">${Admin.icon(iconKey, 'h-5 w-5 feature-icon-option-svg')}</span>
           <span>${escape(iconKey)}</span>
+          ${selectedIcon === iconKey ? `<span class="feature-icon-option-check" aria-hidden="true"><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>` : ''}
         </button>
       `).join('');
       empty?.classList.toggle('hidden', icons.length > 0);
@@ -2064,22 +2074,32 @@
       const isEdit = form.dataset.edit === '1';
       const featureId = Number(form.dataset.itemId || 0);
       const endpoint = isEdit ? route('admin.featureUpdate', { id: featureId }) : route('admin.featureStore');
+      const payload = featurePayload(form);
+      if (!payload.title) {
+        Admin.showToast('Label singkat Program Utama wajib diisi.');
+        form.querySelector('#feature-title')?.focus();
+        return;
+      }
+      if (!payload.name) {
+        Admin.showToast('Nama Program Utama wajib diisi.');
+        form.querySelector('#feature-name')?.focus();
+        return;
+      }
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getAdminCsrfToken() },
         credentials: 'same-origin',
-        body: JSON.stringify(featurePayload(form)),
+        body: JSON.stringify(payload),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        Admin.showToast(json.error || 'Gagal menyimpan Program Utama.');
+        Admin.showToast(formatApiError(json, 'Gagal menyimpan Program Utama.'));
         return;
       }
-      Admin.showToast(isEdit ? 'Program Utama diperbarui.' : 'Program Utama ditambahkan.');
-      const nextId = json.data?.id || featureId;
-      if (!isEdit && nextId) {
-        window.setTimeout(() => { window.location.href = `${adminUrl('feature-edit')}?id=${nextId}`; }, 800);
-      }
+      Admin.showToast(isEdit ? 'Program Utama berhasil diperbarui.' : 'Program Utama berhasil ditambahkan.');
+      window.setTimeout(() => {
+        window.location.href = adminUrl('feature');
+      }, 1000);
     });
   }
 
