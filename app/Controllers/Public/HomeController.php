@@ -11,6 +11,7 @@ use App\Core\ViewRenderer;
 use App\Models\Event;
 use App\Models\Feature;
 use App\Models\News;
+use App\Models\Pengumuman;
 use App\Models\TeamMember;
 use App\Services\SeoService;
 use App\Services\SiteSettings;
@@ -26,6 +27,7 @@ final class HomeController
         private ?TeamMember $teamModel = null,
         private ?ViewRenderer $viewRenderer = null,
         private ?SiteSettings $siteSettings = null,
+        private ?Pengumuman $pengumumanModel = null,
     ) {}
 
     public function index(Request $request, Response $response): void
@@ -37,6 +39,11 @@ final class HomeController
         // The page remains SSR even while the database is temporarily unavailable;
         // individual sections already have safe empty/static fallbacks below.
         if ($this->viewRenderer instanceof ViewRenderer) {
+            $activeAnnouncements = $this->pengumumanModel?->activeForHome(8) ?? [];
+            if ($activeAnnouncements === []) {
+                $activeAnnouncements = $this->newsModel?->paginate(['category' => 'Pengumuman'], 8, 0) ?? [];
+            }
+
             $html = $this->viewRenderer->renderWithLayout('public/home/index.php', 'layouts/public.php', [
                 'site' => $this->siteSettings?->site() ?? $this->siteData(),
                 'homeContent' => ($this->siteSettings?->site() ?? $this->siteData())['home'] ?? [],
@@ -44,7 +51,7 @@ final class HomeController
                 'programs' => $this->featureModel?->homeVisible(12) ?? [],
                 'bpiMembers' => $this->bpiMembers(),
                 'publicEvents' => $this->publicEvents(),
-                'announcements' => $this->newsModel?->paginate(['category' => 'Pengumuman'], 8, 0) ?? [],
+                'announcements' => $activeAnnouncements,
                 'latestNews' => $this->newsModel?->paginate([], 3, 0) ?? [],
                 'meta' => $meta,
                 'jsonld' => $jsonld,

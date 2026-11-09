@@ -72,8 +72,8 @@ class Pengumuman
             $sql = "
                 SELECT * FROM tbl_pengumuman
                 WHERE is_active = 1
-                  AND (start_date IS NULL OR start_date <= CURDATE())
-                  AND (end_date IS NULL OR end_date >= CURDATE())
+
+
                 ORDER BY sort_order ASC, created_at DESC, id DESC
                 LIMIT :limit
             ";
