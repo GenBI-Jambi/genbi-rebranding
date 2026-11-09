@@ -21,6 +21,7 @@ use App\Models\PresensiSubmission;
 use App\Models\Prestasi;
 use App\Models\PrestasiToken;
 use App\Models\TeamMember;
+use App\Models\Pengumuman;
 use App\Services\CsrfService;
 use App\Services\SiteSettings;
 
@@ -43,6 +44,7 @@ final class AdminPageController
         private ?PhotoGallery $photoGalleryModel = null,
         private ?PrestasiToken $prestasiTokenModel = null,
         private ?\App\Models\Buku $bukuModel = null,
+        private ?Pengumuman $pengumumanModel = null,
     ) {}
 
     public function dashboard(Request $request, Response $response): void
@@ -601,6 +603,66 @@ HTML;
         return null;
     }
 
+    private function renderAdminPengumumanSsr(string $page, Request $request): ?string
+    {
+        if (!$this->pengumumanModel) return null;
+
+        $script = '<script defer src="/assets/js/admin/cms.js"></script>';
+
+        if ($page === 'pengumuman') {
+            $pg = Paginator::resolve([
+                'page' => $request->query('page'),
+                'per_page' => $request->query('per_page'),
+            ], 10, 100);
+
+            $filters = [
+                'is_active' => (string) ($request->query('is_active') ?? ''),
+                'q' => (string) ($request->query('q') ?? ''),
+            ];
+
+            $filterArgs = [];
+            if ($filters['is_active'] !== '') {
+                $filterArgs['is_active'] = (int) $filters['is_active'];
+            }
+            if ($filters['q'] !== '') {
+                $filterArgs['q'] = $filters['q'];
+            }
+
+            $items = $this->pengumumanModel->all($filterArgs, $pg['per_page'], $pg['offset']);
+            $total = $this->pengumumanModel->count($filterArgs);
+
+            return $this->viewRenderer->renderWithLayout('admin/pengumuman/index.php', 'layouts/admin.php', [
+                'title' => 'Pengumuman Resmi | Admin GenBI',
+                'csrfToken' => CsrfService::token(),
+                'cmsPage' => 'pengumuman',
+                'cmsMode' => 'list',
+                'items' => $items,
+                'page' => $pg['page'],
+                'perPage' => $pg['per_page'],
+                'total' => $total,
+                'totalPages' => Paginator::totalPages($total, $pg['per_page']),
+                'filters' => $filters,
+                'scripts' => $script,
+            ]);
+        }
+
+        if (in_array($page, ['pengumuman-add', 'pengumuman-edit'], true)) {
+            $id = (int) ($request->query('id') ?? 0);
+            $item = ($page === 'pengumuman-edit' || $id > 0) ? $this->pengumumanModel->find($id) : null;
+
+            return $this->viewRenderer->renderWithLayout('admin/pengumuman/form.php', 'layouts/admin.php', [
+                'title' => ($item ? 'Edit Pengumuman' : 'Tambah Pengumuman Baru') . ' | Admin GenBI',
+                'csrfToken' => CsrfService::token(),
+                'cmsPage' => $page,
+                'cmsMode' => 'editor',
+                'item' => $item,
+                'scripts' => $script,
+            ]);
+        }
+
+        return null;
+    }
+
     private function renderAdminContentSsr(string $page, Request $request): ?string
     {
         $script = '<script defer src="/assets/js/admin/cms.js"></script>';
@@ -763,6 +825,9 @@ HTML;
             if ($ssrHtml === null && in_array($page, ['event', 'event-add', 'event-edit'], true)) {
                 $ssrHtml = $this->renderAdminEventSsr($page, $request);
             }
+            if ($ssrHtml === null && in_array($page, ['pengumuman', 'pengumuman-add', 'pengumuman-edit'], true)) {
+                $ssrHtml = $this->renderAdminPengumumanSsr($page, $request);
+            }
             if ($ssrHtml === null && in_array($page, ['buku', 'buku-add', 'buku-edit'], true)) {
                 $ssrHtml = $this->renderAdminBukuSsr($page, $request);
             }
@@ -784,6 +849,9 @@ HTML;
                 'team-member',
                 'team-member-add',
                 'team-member-edit',
+                'pengumuman',
+                'pengumuman-add',
+                'pengumuman-edit',
                 'buku',
                 'buku-add',
                 'buku-edit',

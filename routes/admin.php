@@ -7,6 +7,7 @@ use App\Core\Response;
 use App\Controllers\Admin\AdminPageController;
 use App\Controllers\Admin\AuthController;
 use App\Controllers\Admin\BukuAdminController as AdminBukuController;
+use App\Controllers\Admin\PengumumanAdminController as AdminPengumumanController;
 use App\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Controllers\Admin\CommentSettingController;
 use App\Controllers\Admin\NewsController as AdminNewsController;
@@ -27,6 +28,7 @@ use App\Middleware\RoleMiddleware;
 
 /** @var AuthController $authController */
 /** @var AdminBukuController $adminBukuController */
+/** @var AdminPengumumanController $adminPengumumanController */
 /** @var AdminPageController $adminPageController */
 /** @var AdminNewsController $adminNewsController */
 /** @var AdminCategoryController $adminCategoryController */
@@ -72,7 +74,8 @@ $router->group([$authMiddleware, $csrfMiddleware, $roleMiddleware], static funct
     $adminCommentSettingController,
     $adminSettingsController,
     $adminPhotoGalleryController,
-    $adminBukuController
+    $adminBukuController,
+    $adminPengumumanController
 ) {
     // Dashboard
     $router->get('/admin', static fn(Request $request, Response $response) => $adminPageController->dashboard($request, $response));
@@ -174,6 +177,14 @@ $router->group([$authMiddleware, $csrfMiddleware, $roleMiddleware], static funct
     $router->post('/admin/buku/upload', static fn(Request $request, Response $response) => $adminBukuController->upload($request, $response));
     $router->post('/admin/buku/{id}/update', static fn(Request $request, Response $response, array $params) => $adminBukuController->update($request, $response, $params));
     $router->post('/admin/buku/{id}/delete', static fn(Request $request, Response $response, array $params) => $adminBukuController->delete($request, $response, $params));
+
+    // Pengumuman CMS (Requires Auth, Protected from unauthenticated access)
+    $router->get('/admin/pengumuman/list', static fn(Request $request, Response $response) => $adminPengumumanController->index($request, $response));
+    $router->get('/admin/pengumuman/{id}', static fn(Request $request, Response $response, array $params) => $adminPengumumanController->show($request, $response, $params));
+    $router->post('/admin/pengumuman', static fn(Request $request, Response $response) => $adminPengumumanController->store($request, $response));
+    $router->post('/admin/pengumuman/upload', static fn(Request $request, Response $response) => $adminPengumumanController->upload($request, $response));
+    $router->post('/admin/pengumuman/{id}/update', static fn(Request $request, Response $response, array $params) => $adminPengumumanController->update($request, $response, $params));
+    $router->post('/admin/pengumuman/{id}/delete', static fn(Request $request, Response $response, array $params) => $adminPengumumanController->delete($request, $response, $params));
 
     // Live settings
     $router->get('/admin/settings', static fn(Request $request, Response $response) => $adminSettingsController->edit($request, $response));

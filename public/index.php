@@ -75,6 +75,11 @@ if (str_starts_with($path, '/assets/')) {
             'png' => 'image/png',
             'svg' => 'image/svg+xml',
             'webp' => 'image/webp',
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ];
         $extension = strtolower(pathinfo($assetPath, PATHINFO_EXTENSION));
         header('Content-Type: ' . ($types[$extension] ?? 'application/octet-stream'));
@@ -102,6 +107,11 @@ if (str_starts_with($path, '/uploads/')) {
             'jpeg' => 'image/jpeg',
             'png' => 'image/png',
             'webp' => 'image/webp',
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ];
         $extension = strtolower(pathinfo($uploadPath, PATHINFO_EXTENSION));
         header('Content-Type: ' . ($types[$extension] ?? 'application/octet-stream'));

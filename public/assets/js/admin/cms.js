@@ -102,6 +102,9 @@
     buku: () => { Admin.renderAdminShell(window.location.pathname.includes('add') ? 'buku-add' : 'buku-list'); },
     'buku-add': () => { Admin.renderAdminShell('buku-add'); },
     'buku-edit': () => { Admin.renderAdminShell('buku-list'); },
+    pengumuman: () => { Admin.renderAdminShell(window.location.pathname.includes('add') ? 'pengumuman-add' : 'pengumuman-list'); },
+    'pengumuman-add': () => { Admin.renderAdminShell('pengumuman-add'); },
+    'pengumuman-edit': () => { Admin.renderAdminShell('pengumuman-list'); },
   };
 
   const teamSelection = new Set();

@@ -28,6 +28,10 @@ final class Response
     /** @param array<string, mixed>|array<int, mixed> $payload */
     public function json(array $payload, int $status = 200, array $headers = []): void
     {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
         http_response_code($status);
         header('Content-Type: application/json; charset=UTF-8');
         foreach ($headers as $name => $value) {
