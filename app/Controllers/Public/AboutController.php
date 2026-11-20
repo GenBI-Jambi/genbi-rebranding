@@ -28,7 +28,7 @@ final class AboutController
             'jsonld' => $jsonld,
             'bodyClass' => 'page-about',
             'activeNav' => 'about',
-            'scripts' => '<script defer src="/assets/js/pages/about.js"></script>',
+            'scripts' => '<script defer src="/assets/js/pages/about.js?v=1.0.1"></script>',
         ]);
         $response->html($html);
     }

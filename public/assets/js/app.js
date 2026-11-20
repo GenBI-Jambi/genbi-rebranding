@@ -442,15 +442,38 @@ function setupBackToTop() {
   if (!button) return;
   if (button.dataset.backToTopReady === '1') return;
   button.dataset.backToTopReady = '1';
+
+  let isScrollingToTop = false;
+
   const toggle = () => {
+    if (isScrollingToTop) return;
     const scrollPos = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
-    button.classList.toggle('is-visible', scrollPos > 280);
+    button.classList.toggle('is-visible', scrollPos > 120);
   };
+
   toggle();
   window.addEventListener('scroll', toggle, { passive: true });
+
   button.addEventListener('click', (e) => {
     e.preventDefault();
+    isScrollingToTop = true;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const checkScrollEnd = () => {
+      const scrollPos = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
+      if (scrollPos <= 20) {
+        isScrollingToTop = false;
+        button.classList.remove('is-visible');
+        window.removeEventListener('scroll', checkScrollEnd);
+      }
+    };
+    window.addEventListener('scroll', checkScrollEnd, { passive: true });
+
+    setTimeout(() => {
+      isScrollingToTop = false;
+      toggle();
+      window.removeEventListener('scroll', checkScrollEnd);
+    }, 1000);
   });
 }
 

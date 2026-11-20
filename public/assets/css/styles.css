@@ -9090,3 +9090,69 @@ html[data-theme^="dark-"] .admin-input,
 html[data-theme^="dark-"] .admin-textarea {
   box-shadow: none !important;
 }
+
+
+/* ==========================================================================
+   PUBLIC FAQ ACCORDION
+   ========================================================================== */
+.faq-item {
+  border: 1px solid rgba(23, 23, 23, 0.08);
+  background-color: rgba(255, 255, 255, 0.95);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.faq-item:hover {
+  border-color: rgba(17, 75, 154, 0.35);
+  box-shadow: 0 4px 12px rgba(17, 75, 154, 0.06);
+}
+.faq-item[open] {
+  border-color: rgba(17, 75, 154, 0.35) !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 10px 25px -5px rgba(17, 75, 154, 0.08), 0 8px 10px -6px rgba(17, 75, 154, 0.04) !important;
+}
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.faq-item summary::-webkit-details-marker {
+  display: none !important;
+}
+.faq-item summary::marker {
+  display: none !important;
+}
+.faq-item summary .faq-question {
+  transition: color 0.2s ease;
+}
+.faq-item[open] summary .faq-question {
+  color: #114b9a;
+}
+.faq-item .faq-icon {
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: 9999px;
+  background-color: #eff6ff;
+  color: #114b9a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, color 0.2s ease;
+}
+.faq-item .faq-icon svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  stroke: currentColor;
+  display: block;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.faq-item[open] summary .faq-icon {
+  transform: rotate(180deg);
+  background-color: #114b9a;
+  color: #ffffff;
+}
