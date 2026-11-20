@@ -442,10 +442,16 @@ function setupBackToTop() {
   if (!button) return;
   if (button.dataset.backToTopReady === '1') return;
   button.dataset.backToTopReady = '1';
-  const toggle = () => button.classList.toggle('is-visible', window.scrollY > 500);
+  const toggle = () => {
+    const scrollPos = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
+    button.classList.toggle('is-visible', scrollPos > 280);
+  };
   toggle();
   window.addEventListener('scroll', toggle, { passive: true });
-  button.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  button.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 }
 
 function formatInitials(name) {

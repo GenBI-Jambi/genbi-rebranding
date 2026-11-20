@@ -55,6 +55,3 @@ $navItems = [
   </div>
   <div class="border-t border-white/10 py-5 text-center text-xs text-blue-100/70">Copyright &copy; <?= date('Y') ?>, GenBI Provinsi Jambi.</div>
 </section>
-<button id="back-to-top" class="back-to-top" aria-label="Back to top"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19.5v-15m0 0-6.75 6.75M12 4.5l6.75 6.75" />
-  </svg></button>

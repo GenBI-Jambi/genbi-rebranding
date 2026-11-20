@@ -131,7 +131,7 @@ function renderPrograms() {
 
   root.innerHTML = programs.map((program, index) => {
     const images = Array.isArray(program.images) && program.images.length ? program.images : [site.heroSlides[0]?.image || 'https://genbijambi.com/public/uploads/slider-1.png'];
-    const focusBadge = program.focus ? `<span class="blue-badge mx-auto mt-5">${program.focus}</span>` : '';
+    const focusBadge = `<span class="blue-badge mx-auto mt-auto">${program.focus || 'Program Kerja'}</span>`;
     return `
       <article class="editorial-slide-card program-slide-card" role="group" aria-roledescription="slide" aria-label="Program ${index + 1} dari ${programs.length}" data-program-slides='${JSON.stringify(images)}' style="--program-bg-image: url('${images[0]}');">
         <span class="slide-index">${String(index + 1).padStart(2, '0')}</span>
@@ -241,7 +241,7 @@ async function renderHomeEvents() {
       <p class="slide-kicker">${type}</p>
       <h3>${event.title}</h3>
       <p>${description}</p>
-      <span class="blue-badge mx-auto mt-5">${date}</span>
+      <span class="blue-badge mx-auto mt-auto">${date}</span>
     </article>
   `;
   }).join('');

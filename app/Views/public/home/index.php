@@ -463,13 +463,11 @@ $eventIconMarkup = static function (string $type): string {
                 style="--program-bg-image: url('<?= $e($firstImage) ?>');"
               >
                 <span class="slide-index"><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></span>
-                <span class="program-icon mx-auto" data-program-icon="<?= $e($program['icon_key'] ?? 'sparkles') ?>"></span>
+                <span class="program-icon mx-auto" data-program-icon="<?= $e($program['icon_key'] ?? 'sparkles') ?>"><?= $eventIconMarkup($program['icon_key'] ?? 'sparkles') ?></span>
                 <p class="slide-kicker"><?= $e($program['title'] ?? '') ?></p>
                 <h3><?= $e($program['name'] ?? '') ?></h3>
                 <p><?= $e($program['description'] ?? '') ?></p>
-                <?php if (!empty($program['focus'])): ?>
-                  <span class="blue-badge mx-auto mt-5"><?= $e($program['focus']) ?></span>
-                <?php endif; ?>
+                <span class="blue-badge mx-auto mt-auto"><?= $e(!empty($program['focus']) ? $program['focus'] : 'Program Kerja') ?></span>
               </article>
             <?php endforeach; ?>
           <?php endif; ?>
@@ -554,7 +552,7 @@ $eventIconMarkup = static function (string $type): string {
               <p class="slide-kicker"><?= $e($eventType) ?></p>
               <h3><?= $e((string) ($event['title'] ?? '')) ?></h3>
               <p><?= $e($eventDescription) ?></p>
-              <span class="blue-badge mx-auto mt-5"><?= $e($eventDate) ?></span>
+              <span class="blue-badge mx-auto mt-auto"><?= $e($eventDate) ?></span>
             </article>
           <?php endforeach; ?>
         </div>
@@ -724,15 +722,241 @@ $eventIconMarkup = static function (string $type): string {
     border-color: #114b9a !important;
 }
 
-/* Icon and Number color specifically for program-slide-card */
+/* ==========================================================================
+   PROGRAM UTAMA & AGENDA UTAMA HARMONIZATION
+   ========================================================================== */
+.horizontal-carousel.program-carousel,
+.horizontal-carousel.event-carousel {
+    display: flex !important;
+    align-items: stretch !important;
+}
+
+.editorial-slide-card.program-slide-card,
+.editorial-slide-card.agenda-slide-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    text-align: center !important;
+    height: 100% !important;
+    min-height: 420px !important;
+    padding: 2.25rem 1.6rem 1.6rem !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    isolation: isolate !important;
+    border-radius: 1.75rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 16px 45px rgba(12, 53, 114, 0.14) !important;
+    transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 260ms ease !important;
+}
+
+.editorial-slide-card.program-slide-card:hover,
+.editorial-slide-card.agenda-slide-card:hover {
+    transform: translateY(-4px) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 24px 60px rgba(12, 53, 114, 0.22) !important;
+}
+
+.editorial-slide-card.program-slide-card::after,
+.editorial-slide-card.agenda-slide-card::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: -1 !important;
+    border-radius: inherit !important;
+    background: linear-gradient(
+        180deg,
+        rgba(10, 42, 92, 0.90) 0%,
+        rgba(12, 53, 114, 0.84) 42%,
+        rgba(7, 28, 64, 0.96) 100%
+    ) !important;
+}
+
 .program-slide-card .slide-index,
-.program-slide-card .program-icon {
+.agenda-slide-card .slide-index {
+    position: absolute !important;
+    top: 1.15rem !important;
+    left: 1.15rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    border-radius: 9999px !important;
+    background: rgba(255, 255, 255, 0.94) !important;
     color: #114b9a !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(17, 75, 154, 0.15) !important;
+    z-index: 2 !important;
+}
+
+.program-slide-card .program-icon,
+.agenda-slide-card .program-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 3.25rem !important;
+    height: 3.25rem !important;
+    min-height: 3.25rem !important;
+    border-radius: 1rem !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #114b9a !important;
+    box-shadow: 0 4px 14px rgba(12, 53, 114, 0.16), inset 0 0 0 1px rgba(17, 75, 154, 0.15) !important;
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.85rem !important;
+    margin-inline: auto !important;
+    flex-shrink: 0 !important;
 }
 
 .program-slide-card .program-icon svg,
-.program-slide-card .program-icon i {
+.agenda-slide-card .program-icon svg,
+.program-slide-card .program-icon i,
+.agenda-slide-card .program-icon i {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
     color: #114b9a !important;
+    stroke: currentColor !important;
+}
+
+.program-slide-card .slide-kicker,
+.agenda-slide-card .slide-kicker {
+    margin-top: 0 !important;
+    margin-bottom: 0.45rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: rgba(247, 251, 255, 0.85) !important;
+    min-height: 1.25rem !important;
+    flex-shrink: 0 !important;
+}
+
+.program-slide-card h3,
+.agenda-slide-card h3 {
+    font-family: 'Source Serif 4', Georgia, serif !important;
+    font-size: clamp(1.25rem, 2vw, 1.55rem) !important;
+    line-height: 1.28 !important;
+    font-weight: 650 !important;
+    letter-spacing: -0.02em !important;
+    color: #ffffff !important;
+    margin-top: 0 !important;
+    margin-bottom: 0.65rem !important;
+    margin-inline: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 3.8em !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex-shrink: 0 !important;
+}
+
+.program-slide-card p:not(.slide-kicker),
+.agenda-slide-card p:not(.slide-kicker) {
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
+    font-size: 0.88rem !important;
+    line-height: 1.62 !important;
+    font-weight: 400 !important;
+    color: rgba(247, 251, 255, 0.88) !important;
+    margin-top: 0 !important;
+    margin-bottom: 1.25rem !important;
+    margin-inline: auto !important;
+    width: 100% !important;
+    max-width: 22rem !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 4 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.program-slide-card .blue-badge,
+.agenda-slide-card .blue-badge {
+    margin-top: auto !important;
+    margin-bottom: 0 !important;
+    margin-inline: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    padding: 0.45rem 1.05rem !important;
+    border-radius: 9999px !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12) !important;
+    white-space: nowrap !important;
+    max-width: 95% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex-shrink: 0 !important;
+}
+
+/* ==========================================================================
+   TOMBOL KEMBALI KE ATAS (BACK TO TOP)
+   ========================================================================== */
+.back-to-top {
+    position: fixed !important;
+    right: 1.5rem !important;
+    bottom: 1.5rem !important;
+    z-index: 99 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    border-radius: 9999px !important;
+    background: #114b9a !important;
+    color: #ffffff !important;
+    border: 2px solid rgba(255, 255, 255, 0.85) !important;
+    box-shadow: 0 6px 20px rgba(12, 53, 114, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+    cursor: pointer !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform: translateY(14px) scale(0.92) !important;
+    transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1),
+                transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 280ms ease,
+                background-color 200ms ease,
+                box-shadow 200ms ease !important;
+}
+
+.back-to-top:hover {
+    background: #0c3572 !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) scale(1.06) !important;
+    box-shadow: 0 10px 28px rgba(12, 53, 114, 0.45) !important;
+}
+
+.back-to-top:active {
+    transform: translateY(0) scale(0.95) !important;
+}
+
+.back-to-top.is-visible {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: translateY(0) scale(1) !important;
+}
+
+@media (max-width: 640px) {
+    .back-to-top {
+        right: 1rem !important;
+        bottom: 1.25rem !important;
+        width: 2.75rem !important;
+        height: 2.75rem !important;
+    }
 }
 </style>
 
