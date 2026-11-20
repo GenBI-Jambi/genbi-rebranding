@@ -9156,3 +9156,210 @@ html[data-theme^="dark-"] .admin-textarea {
   background-color: #114b9a;
   color: #ffffff;
 }
+
+/* ==========================================================================
+   PUBLIC TEAM PHOTO & CARD ENHANCEMENTS
+   ========================================================================== */
+.team-public-card {
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  user-select: none;
+}
+
+.team-public-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(17, 75, 154, 0.35);
+  box-shadow: 0 18px 40px -12px rgba(17, 75, 154, 0.15);
+}
+
+.team-public-photo {
+  width: 100% !important;
+  aspect-ratio: 4 / 5 !important;
+  border-radius: 1.25rem !important;
+  overflow: hidden !important;
+  background-color: #f1f5f9 !important;
+}
+
+.team-public-photo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 20% !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.team-public-card:hover .team-public-photo img {
+  transform: scale(1.04) !important;
+}
+
+.team-public-row {
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  user-select: none;
+}
+
+.team-public-row:hover {
+  transform: translateY(-2px);
+  border-color: rgba(17, 75, 154, 0.35);
+  box-shadow: 0 10px 28px -8px rgba(17, 75, 154, 0.12);
+}
+
+.team-public-row-photo {
+  width: 4.75rem !important;
+  height: 6rem !important;
+  aspect-ratio: 4 / 5 !important;
+  border-radius: 1rem !important;
+  overflow: hidden !important;
+}
+
+.team-public-row-photo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 20% !important;
+}
+
+.public-fixed-modal {
+  z-index: 99999 !important;
+}
+
+/* ==========================================================================
+   MINIMALIST BACK-TO-TOP BUTTON
+   ========================================================================== */
+#back-to-top,
+.back-to-top {
+  position: fixed !important;
+  right: 1.5rem !important;
+  bottom: 1.5rem !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  border-radius: 9999px !important;
+  background-color: #114b9a !important;
+  background: #114b9a !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 14px rgba(17, 75, 154, 0.35) !important;
+  cursor: pointer !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: translateY(10px) scale(0.94) !important;
+  transition: opacity 220ms ease,
+              transform 220ms ease,
+              visibility 220ms ease,
+              background-color 180ms ease,
+              box-shadow 180ms ease !important;
+}
+
+#back-to-top:hover,
+.back-to-top:hover {
+  background-color: #0c3572 !important;
+  background: #0c3572 !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) scale(1.04) !important;
+  box-shadow: 0 6px 20px rgba(12, 53, 114, 0.45) !important;
+}
+
+#back-to-top:active,
+.back-to-top:active {
+  background-color: #0c3572 !important;
+  transform: translateY(0) scale(0.96) !important;
+}
+
+#back-to-top.is-visible,
+.back-to-top.is-visible {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: translateY(0) scale(1) !important;
+}
+
+#back-to-top svg,
+.back-to-top svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+  display: block !important;
+}
+
+@media (max-width: 640px) {
+  #back-to-top,
+  .back-to-top {
+    right: 1rem !important;
+    bottom: 1rem !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+}
+
+/* ==========================================================================
+   TEAM MEMBER CREDENTIAL INFO BOX
+   ========================================================================== */
+.team-credential-box {
+  background: #f8fafc;
+  border: 1px solid rgba(23, 23, 23, 0.08);
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.team-credential-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.team-credential-icon {
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 0.625rem;
+  background: #eef4fb;
+  color: #114b9a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.team-credential-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  stroke-width: 2;
+}
+
+.team-credential-text {
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
+.team-credential-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+.team-credential-val {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.35;
+  margin-top: 0.125rem;
+}
+
+.team-credential-divider {
+  height: 1px;
+  background: rgba(226, 232, 240, 0.8);
+  width: 100%;
+}
