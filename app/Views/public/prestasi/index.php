@@ -191,84 +191,266 @@ $endItem = min($page * $perPage, $total);
 }
 
 /* ==========================================================================
-   MODAL DETAIL CARD PRESTASI
+   MODAL DETAIL CARD PRESTASI - CLEAN INTERNAL SCROLL & VIEWPORT ADAPTIVE
    ========================================================================== */
+#prestasi-modal.public-fixed-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  padding: clamp(0.75rem, 2.5vw, 1.75rem) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+#prestasi-modal.public-fixed-modal.hidden {
+  display: none !important;
+}
+
 .prestasi-detail-panel {
   position: relative !important;
   width: min(100%, 940px) !important;
-  max-height: calc(100vh - 3.5rem) !important;
-  overflow-y: auto !important;
-  padding: 0 !important;
-  border-radius: 1.75rem !important;
-  border: 1px solid rgba(23, 23, 23, 0.1) !important;
+  margin: auto !important;
   background: #ffffff !important;
-  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.3) !important;
-  animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border-radius: 1.5rem !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 25px 70px -10px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+  animation: modalPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: calc(100dvh - 2.5rem) !important;
 }
 
 @media (min-width: 900px) {
   .prestasi-detail-panel {
     display: grid !important;
-    width: min(100%, 1000px) !important;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) !important;
+    grid-template-columns: minmax(360px, 430px) minmax(0, 1fr) !important;
     align-items: stretch !important;
-    max-height: min(85vh, 680px) !important;
+    height: min(85vh, 620px) !important;
+    max-height: 620px !important;
+    overflow: hidden !important;
   }
 }
 
 .prestasi-detail-close {
   position: absolute !important;
-  top: 1rem !important;
-  right: 1rem !important;
-  z-index: 20 !important;
+  top: 1.125rem !important;
+  right: 1.125rem !important;
+  z-index: 60 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   width: 2.25rem !important;
   height: 2.25rem !important;
   border-radius: 9999px !important;
-  background: rgba(255, 255, 255, 0.92) !important;
-  border: 1px solid rgba(23, 23, 23, 0.12) !important;
-  color: #525252 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  color: #475569 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   transition: all 180ms ease !important;
   cursor: pointer !important;
 }
 
 .prestasi-detail-close:hover {
   background: #ffffff !important;
-  color: #0f172a !important;
+  color: #0c3572 !important;
+  border-color: rgba(17, 75, 154, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(17, 75, 154, 0.18) !important;
   transform: scale(1.06) !important;
 }
 
+.prestasi-detail-close:active {
+  transform: scale(0.95) !important;
+}
+
+.prestasi-card-block {
+  margin-top: 1rem !important;
+  background: #f8fafc !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  border-radius: 1rem !important;
+  padding: 1rem 1.125rem !important;
+  text-align: left !important;
+}
+
+.prestasi-card-tag {
+  display: block !important;
+  font-size: 0.6875rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: #114b9a !important;
+  margin-bottom: 0.625rem !important;
+  text-align: left !important;
+}
+
+.prestasi-person-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding-bottom: 0.625rem !important;
+  border-bottom: 1px solid #edf2f7 !important;
+  margin-bottom: 0.625rem !important;
+  text-align: left !important;
+}
+
+.prestasi-person-avatar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  border-radius: 9999px !important;
+  background: #eef6ff !important;
+  border: 1px solid rgba(17, 75, 154, 0.15) !important;
+  flex-shrink: 0 !important;
+}
+
+.prestasi-person-name {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+  line-height: 1.3 !important;
+  text-align: left !important;
+}
+
+.prestasi-data-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.625rem !important;
+  text-align: left !important;
+}
+
+.prestasi-data-item {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.15rem !important;
+  text-align: left !important;
+}
+
+.prestasi-data-label {
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #64748b !important;
+  text-align: left !important;
+}
+
+.prestasi-data-val {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: #1e293b !important;
+  line-height: 1.45 !important;
+  text-align: left !important;
+  word-break: break-word !important;
+}
+
+/* Sembunyikan tombol back-to-top saat modal prestasi aktif */
+body.modal-lock #back-to-top,
+body.modal-lock .back-to-top,
+#prestasi-modal:not(.hidden) ~ #back-to-top {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.prestasi-detail-footer {
+  margin-top: 1.5rem !important;
+  padding-top: 1.25rem !important;
+  border-top: 1px solid #f1f5f9 !important;
+  flex-shrink: 0 !important;
+}
+
 .prestasi-detail-image {
-  overflow: hidden;
-  background: var(--blue-50);
-  border-radius: 1.75rem 1.75rem 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 220px;
+  position: relative !important;
+  overflow: hidden !important;
+  background: #f1f5f9 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  height: 230px !important;
 }
 
 @media (min-width: 900px) {
   .prestasi-detail-image {
-    min-height: 100%;
-    border-radius: 1.75rem 0 0 1.75rem;
+    height: 100% !important;
+    min-height: 100% !important;
   }
 }
 
 .prestasi-detail-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 25% !important;
+  display: block !important;
 }
 
 .prestasi-detail-copy {
-  display: flex;
-  flex-direction: column;
-  padding: clamp(1.25rem, 3vw, 2.25rem);
-  overflow-y: auto;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 3.5vw, 2.25rem) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  box-sizing: border-box !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(17, 75, 154, 0.25) transparent !important;
+}
+
+.prestasi-detail-copy::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.prestasi-detail-copy::-webkit-scrollbar-track {
+  background: transparent !important;
+  margin: 0.75rem 0 !important;
+}
+
+.prestasi-detail-copy::-webkit-scrollbar-thumb {
+  background: rgba(17, 75, 154, 0.2) !important;
+  border-radius: 9999px !important;
+  transition: background 0.2s ease !important;
+}
+
+.prestasi-detail-copy::-webkit-scrollbar-thumb:hover {
+  background: #114b9a !important;
+}
+
+@media (max-width: 899px) {
+  .prestasi-detail-panel {
+    max-height: min(90dvh, 680px) !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(17, 75, 154, 0.25) transparent !important;
+  }
+  .prestasi-detail-panel::-webkit-scrollbar {
+    width: 6px !important;
+  }
+  .prestasi-detail-panel::-webkit-scrollbar-thumb {
+    background: rgba(17, 75, 154, 0.2) !important;
+    border-radius: 9999px !important;
+  }
+  .prestasi-detail-copy {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    padding: 1.25rem 1.25rem 1.75rem !important;
+  }
 }
 
 .prestasi-detail-meta {

@@ -71,6 +71,15 @@ $content = $content ?? '';
       pointer-events: auto !important;
       transform: translateY(0) scale(1) !important;
     }
+    body.modal-lock #back-to-top,
+    body.modal-lock .back-to-top,
+    body:has(.public-fixed-modal:not(.hidden)) #back-to-top,
+    body:has(.public-fixed-modal:not(.hidden)) .back-to-top {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      transform: translateY(16px) scale(0.9) !important;
+    }
     #back-to-top svg,
     .back-to-top svg {
       width: 1.25rem !important;
@@ -102,8 +111,8 @@ $content = $content ?? '';
   <script defer src="/assets/js/data.js"></script>
   <script defer src="/assets/js/api-core.js"></script>
   <script defer src="/assets/js/api.js"></script>
-  <script defer src="/assets/js/app.js?v=1.0.4"></script>
-  <script defer src="/assets/js/lib/ui.js"></script>
+  <script defer src="/assets/js/app.js?v=1.0.7"></script>
+  <script defer src="/assets/js/lib/ui.js?v=1.0.7"></script>
   <button id="back-to-top" class="back-to-top" aria-label="Kembali ke atas" title="Kembali ke atas"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19.5v-15m0 0-6.75 6.75M12 4.5l6.75 6.75" /></svg></button>
   <?= $scripts ?? '' ?>
 </body>

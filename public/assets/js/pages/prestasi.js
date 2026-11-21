@@ -12,13 +12,41 @@
 
   ensurePrestasiModal();
   const modalEl = document.querySelector('#prestasi-modal');
+  let activeLoadingId = null;
+
+  function closePrestasiModal() {
+    activeLoadingId = null;
+    if (prestasiModal) {
+      prestasiModal.close();
+    }
+    if (modalEl) {
+      modalEl.classList.add('hidden');
+      modalEl.innerHTML = '';
+    }
+    document.body.classList.remove('modal-lock');
+    document.documentElement.classList.remove('modal-lock');
+    const btt = document.querySelector('#back-to-top');
+    if (btt) {
+      btt.style.removeProperty('display');
+    }
+  }
+
   const prestasiModal = (typeof createModalController === 'function' && modalEl)
-    ? createModalController(modalEl)
+    ? createModalController(modalEl, {
+        onClose: () => {
+          document.body.classList.remove('modal-lock');
+          document.documentElement.classList.remove('modal-lock');
+          const btt = document.querySelector('#back-to-top');
+          if (btt) {
+            btt.style.removeProperty('display');
+          }
+          activeLoadingId = null;
+        }
+      })
     : null;
 
   let prestasi = Array.isArray(window.prestasiData) ? [...window.prestasiData] : [];
   let currentLayout = 'grid';
-  let activeLoadingId = null;
 
   function escapeHtml(str = '') {
     return String(str ?? '')
@@ -30,11 +58,111 @@
   }
 
   function ensurePrestasiModal() {
-    if (document.querySelector('#prestasi-modal')) return;
-    const modal = document.createElement('div');
-    modal.id = 'prestasi-modal';
-    modal.className = 'public-fixed-modal hidden';
-    document.body.appendChild(modal);
+    let modal = document.querySelector('#prestasi-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'prestasi-modal';
+      modal.className = 'public-fixed-modal hidden';
+      document.body.appendChild(modal);
+    }
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal || e.target.closest('.prestasi-detail-close, [data-modal-close], .modal-close')) {
+        e.preventDefault();
+        closePrestasiModal();
+      }
+    });
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.querySelector('#prestasi-modal');
+      if (modal && !modal.classList.contains('hidden')) {
+        closePrestasiModal();
+      }
+    }
+  });
+
+  function resolvePrestasiDetailData(item = {}) {
+    const title = String(item.title || 'Prestasi Anggota GenBI').trim();
+    const name = String(item.name || item.member_name || '-').trim();
+    let campus = String(item.campus || '').trim();
+    let prodi = '';
+    let category = String(item.category || item.kategori || 'Prestasi').trim();
+    const year = String(item.year || item.tahun || '').trim();
+    let rawInstitution = String(item.institution || item.penyelenggara || '').trim();
+    const rawDesc = String(item.description || item.deskripsi || '').trim();
+
+    let namaAcara = '';
+    let penyelenggara = '';
+    let capaian = '';
+    let extraRows = [];
+    let narrativeText = '';
+
+    if (rawDesc.includes('|')) {
+      const parts = rawDesc.split('|').map((p) => p.trim()).filter(Boolean);
+      parts.forEach((part) => {
+        const colonIdx = part.indexOf(':');
+        if (colonIdx > -1) {
+          const label = part.substring(0, colonIdx).trim();
+          const labelLower = label.toLowerCase();
+          const val = part.substring(colonIdx + 1).trim();
+
+          if (labelLower === 'program studi' || labelLower === 'prodi' || labelLower === 'jurusan') {
+            prodi = val;
+          } else if (labelLower === 'kampus' || labelLower === 'asal kampus' || labelLower === 'universitas' || labelLower === 'komisariat') {
+            if (!campus || campus === '-') campus = val;
+          } else if (labelLower === 'acara' || labelLower === 'nama acara' || labelLower === 'kegiatan' || labelLower === 'nama kegiatan') {
+            namaAcara = val;
+          } else if (labelLower === 'penyelenggara' || labelLower === 'diadakan oleh' || labelLower === 'institusi') {
+            penyelenggara = val;
+          } else if (labelLower === 'prestasi' || labelLower === 'capaian' || labelLower === 'juara') {
+            capaian = val;
+          } else {
+            extraRows.push({ label, val });
+          }
+        } else {
+          extraRows.push({ label: '', val: part });
+        }
+      });
+    } else {
+      narrativeText = rawDesc;
+    }
+
+    // Fallback if namaAcara is empty
+    if (!namaAcara && rawInstitution) {
+      namaAcara = rawInstitution;
+    }
+
+    // Split "yang diadakan oleh" or "diadakan oleh" if present in namaAcara
+    if (namaAcara) {
+      const splitMatch = namaAcara.match(/\s+(?:yang\s+)?diadakan\s+oleh\s+/i);
+      if (splitMatch && splitMatch.index !== undefined) {
+        const ev = namaAcara.substring(0, splitMatch.index).trim();
+        const org = namaAcara.substring(splitMatch.index + splitMatch[0].length).trim();
+        namaAcara = ev;
+        if (!penyelenggara) {
+          penyelenggara = org;
+        }
+      }
+    }
+
+    if (!penyelenggara && rawInstitution && rawInstitution !== namaAcara) {
+      penyelenggara = rawInstitution;
+    }
+
+    return {
+      title,
+      name,
+      campus,
+      prodi,
+      category,
+      year,
+      namaAcara,
+      penyelenggara,
+      capaian,
+      extraRows,
+      narrativeText,
+    };
   }
 
   function getFallbackImage(index = 0) {
@@ -72,52 +200,108 @@
   function renderDetailModal(item = {}, index = 0) {
     const fallbackImage = getFallbackImage(index);
     const image = resolveItemImage(item, index);
-    const title = escapeHtml(item.title || 'Prestasi Anggota GenBI');
-    const name = escapeHtml(item.name || item.member_name || '-');
-    const campus = escapeHtml(item.campus || item.institution || '-');
-    const category = escapeHtml(item.category || item.kategori || 'Prestasi');
-    const year = escapeHtml(String(item.year || item.tahun || ''));
-    const institution = escapeHtml(item.institution || item.penyelenggara || '');
-    const description = escapeHtml(item.description || item.deskripsi || '');
+    const data = resolvePrestasiDetailData(item);
     const slug = item.slug || item.id || '';
     const detailUrl = `/prestasi/${encodeURIComponent(slug)}`;
 
+    // Clean category badge so it's not a duplicated huge sentence
+    const displayCategory = (data.category && data.category.toLowerCase() !== data.title.toLowerCase() && data.category.length <= 28)
+      ? data.category
+      : 'GenBI Prestasi';
+
     return `
       <div class="public-modal-panel prestasi-detail-panel modal-panel is-open" role="dialog" aria-modal="true" aria-labelledby="prestasi-modal-title">
-        <button type="button" class="prestasi-detail-close modal-close" aria-label="Tutup ringkasan prestasi">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+        <button type="button" class="prestasi-detail-close modal-close" data-modal-close aria-label="Tutup ringkasan prestasi" title="Tutup">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
         <figure class="prestasi-detail-image">
-          <img src="${image}" alt="Dokumentasi ${title}" onerror="this.src='${fallbackImage}'" />
+          <img src="${image}" alt="Dokumentasi ${escapeHtml(data.title)}" onerror="this.src='${fallbackImage}'" />
         </figure>
 
         <div class="prestasi-detail-copy">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-[#114b9a] border border-blue-200/50">
-              ${category}
+          <div class="flex flex-wrap items-center gap-2 pr-10">
+            <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-[#114b9a] border border-blue-200/60">
+              ${escapeHtml(displayCategory)}
             </span>
-            ${year ? `<span class="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-600">Tahun ${year}</span>` : ''}
+            ${data.year ? `<span class="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-600">Tahun ${escapeHtml(data.year)}</span>` : ''}
           </div>
 
           <h2 id="prestasi-modal-title" class="serif mt-3 text-2xl font-bold leading-tight tracking-tight text-neutral-950 md:text-3xl">
-            ${title}
+            ${escapeHtml(data.title)}
           </h2>
 
-          <div class="mt-4 rounded-xl bg-blue-50/60 border border-blue-100/80 p-3.5 text-sm leading-relaxed text-blue-950">
-            <div class="text-[0.6875rem] font-bold uppercase tracking-wider text-[#114b9a]">Penerima Prestasi</div>
-            <strong class="text-base font-semibold text-neutral-900 block mt-0.5">${name}</strong>
-            <span class="text-xs text-neutral-600">${campus}${institution && institution !== campus ? ' • ' + institution : ''}</span>
+          <!-- 1. DATA PENERIMA PRESTASI (DATA PRIBADI) -->
+          <div class="prestasi-card-block">
+            <div class="prestasi-card-tag">Data Penerima Prestasi</div>
+            <div class="prestasi-person-row">
+              <div class="prestasi-person-avatar">
+                <svg class="h-4 w-4 text-[#114b9a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 class="prestasi-person-name">${escapeHtml(data.name)}</h3>
+              </div>
+            </div>
+            <div class="prestasi-data-grid">
+              ${data.prodi ? `
+                <div class="prestasi-data-item">
+                  <span class="prestasi-data-label">Program Studi</span>
+                  <span class="prestasi-data-val">${escapeHtml(data.prodi)}</span>
+                </div>
+              ` : ''}
+              ${data.campus ? `
+                <div class="prestasi-data-item">
+                  <span class="prestasi-data-label">Asal Kampus / Komisariat</span>
+                  <span class="prestasi-data-val">${escapeHtml(data.campus)}</span>
+                </div>
+              ` : ''}
+            </div>
           </div>
 
-          ${description ? `<p class="mt-3.5 text-sm leading-relaxed text-neutral-600">${description}</p>` : ''}
+          <!-- 2. INFORMASI KEGIATAN & PERLOMBAAN -->
+          <div class="prestasi-card-block">
+            <div class="prestasi-card-tag">Informasi Kegiatan & Perlombaan</div>
+            <div class="prestasi-data-grid">
+              ${data.namaAcara ? `
+                <div class="prestasi-data-item">
+                  <span class="prestasi-data-label">Nama Kegiatan / Acara</span>
+                  <span class="prestasi-data-val font-semibold text-neutral-900">${escapeHtml(data.namaAcara)}</span>
+                </div>
+              ` : ''}
+              ${data.penyelenggara ? `
+                <div class="prestasi-data-item">
+                  <span class="prestasi-data-label">Penyelenggara / Diadakan Oleh</span>
+                  <span class="prestasi-data-val">${escapeHtml(data.penyelenggara)}</span>
+                </div>
+              ` : ''}
+              ${data.capaian && data.capaian.toLowerCase() !== data.title.toLowerCase() ? `
+                <div class="prestasi-data-item">
+                  <span class="prestasi-data-label">Capaian Prestasi</span>
+                  <span class="prestasi-data-val">${escapeHtml(data.capaian)}</span>
+                </div>
+              ` : ''}
+              ${data.extraRows.map(row => `
+                <div class="prestasi-data-item">
+                  ${row.label ? `<span class="prestasi-data-label">${escapeHtml(row.label)}</span>` : ''}
+                  <span class="prestasi-data-val">${escapeHtml(row.val)}</span>
+                </div>
+              `).join('')}
+              ${data.narrativeText ? `
+                <div class="prestasi-data-item">
+                  <span class="prestasi-data-val leading-relaxed text-neutral-600">${escapeHtml(data.narrativeText)}</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
 
-          <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-neutral-100 pt-5">
-            <a data-transition href="${detailUrl}" class="btn btn-primary flex-1 sm:flex-initial inline-flex items-center justify-center gap-2" aria-label="Baca detail lengkap mengenai ${title}">
+          <div class="prestasi-detail-footer">
+            <a data-transition href="${detailUrl}" class="btn btn-primary inline-flex items-center justify-center gap-2 w-full sm:w-auto" aria-label="Baca detail lengkap mengenai ${escapeHtml(data.title)}">
               <span>Baca Detail Lengkap</span>
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
               </svg>
             </a>
@@ -156,6 +340,11 @@
 
     activeLoadingId = id;
 
+    const btt = document.querySelector('#back-to-top');
+    if (btt) {
+      btt.style.setProperty('display', 'none', 'important');
+    }
+
     // 1. Buka modal dengan loading spinner elegan
     if (prestasiModal) {
       prestasiModal.open({
@@ -178,6 +367,16 @@
         content: renderDetailModal(finalItem, index),
         trigger: card,
       });
+
+      if (modalEl) {
+        modalEl.querySelectorAll('.prestasi-detail-close, [data-modal-close]').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closePrestasiModal();
+          });
+        });
+      }
 
       const modalImage = document.querySelector('#prestasi-modal .prestasi-detail-image img');
       if (modalImage) {

@@ -71,11 +71,20 @@
     const getPanel = () => modal.querySelector(panelSelector) || modal;
 
     const close = () => {
-      if (!isOpen) return;
+      if (!isOpen) {
+        modal.classList.add('hidden');
+        modal.innerHTML = '';
+        lockCount = 0;
+        document.body?.classList?.remove('modal-lock');
+        document.documentElement?.classList?.remove('modal-lock');
+        return;
+      }
       isOpen = false;
       modal.classList.add('hidden');
       modal.innerHTML = '';
-      unlockBody();
+      lockCount = 0;
+      document.body?.classList?.remove('modal-lock');
+      document.documentElement?.classList?.remove('modal-lock');
       modal.removeEventListener('click', onBackdrop);
       window.removeEventListener('keydown', onKeydown);
       if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
@@ -116,8 +125,10 @@
       previousFocus = trigger;
       modal.innerHTML = content;
       modal.classList.remove('hidden');
-      lockBody();
-      isOpen = true;
+      if (!isOpen) {
+        lockBody();
+        isOpen = true;
+      }
       const panel = getPanel();
       if (!panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
       modal.querySelectorAll(closeSelector).forEach((button) => button.addEventListener('click', close));
