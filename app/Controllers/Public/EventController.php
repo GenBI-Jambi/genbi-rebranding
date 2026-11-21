@@ -26,7 +26,8 @@ final class EventController
 
     public function index(Request $request, Response $response): void
     {
-        $filters = ['q' => $request->query('q')];
+        $q = trim((string) ($request->query('q') ?? ''));
+        $filters = ['q' => $q !== '' ? $q : null];
 
         if ($request->acceptsJson()) {
             $pg = Paginator::resolve([
@@ -69,7 +70,7 @@ final class EventController
                 'meta' => $meta,
                 'jsonld' => $jsonld,
                 'bodyClass' => 'page-event',
-                'scripts' => '<script defer src="/assets/js/pages/event.js"></script>',
+                'scripts' => '<script defer src="/assets/js/pages/event.js?v=1.0.8"></script>',
             ]);
             $response->html($html);
             return;
@@ -151,7 +152,7 @@ final class EventController
                 'meta' => $meta,
                 'jsonld' => $jsonld,
                 'bodyClass' => 'page-event-detail',
-                'scripts' => '<script defer src="/assets/js/pages/event.js"></script>',
+                'scripts' => '<script defer src="/assets/js/pages/event.js?v=1.0.8"></script>',
             ]);
             $response->html($html, is_array($item) ? 200 : 404);
             return;

@@ -43,7 +43,7 @@ final class FeatureController
                 'meta' => $meta,
                 'jsonld' => $jsonld,
                 'bodyClass' => 'page-feature',
-                'scripts' => '<script defer src="/assets/js/pages/feature.js"></script>',
+                'scripts' => '<script defer src="/assets/js/pages/feature.js?v=1.0.8"></script>',
             ]));
             return;
         }

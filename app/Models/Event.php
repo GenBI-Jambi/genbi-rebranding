@@ -33,8 +33,12 @@ final class Event
             $params = [];
 
             if (!empty($filters['q'])) {
-                $sql .= ' AND (event_title LIKE :q OR event_content_short LIKE :q OR event_location LIKE :q)';
-                $params['q'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+                $sql .= ' AND (event_title LIKE :q1 OR event_content_short LIKE :q2 OR event_content LIKE :q3 OR event_location LIKE :q4)';
+                $escaped = '%' . str_replace(['%', '_'], ['\\%', '\\_'], (string) $filters['q']) . '%';
+                $params['q1'] = $escaped;
+                $params['q2'] = $escaped;
+                $params['q3'] = $escaped;
+                $params['q4'] = $escaped;
             }
 
             $sql .= ' ORDER BY event_start_date DESC, event_id DESC LIMIT :limit OFFSET :offset';
@@ -63,8 +67,12 @@ final class Event
             $params = [];
 
             if (!empty($filters['q'])) {
-                $sql .= ' AND (event_title LIKE :q OR event_content_short LIKE :q OR event_location LIKE :q)';
-                $params['q'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+                $sql .= ' AND (event_title LIKE :q1 OR event_content_short LIKE :q2 OR event_content LIKE :q3 OR event_location LIKE :q4)';
+                $escaped = '%' . str_replace(['%', '_'], ['\\%', '\\_'], (string) $filters['q']) . '%';
+                $params['q1'] = $escaped;
+                $params['q2'] = $escaped;
+                $params['q3'] = $escaped;
+                $params['q4'] = $escaped;
             }
 
             $stmt = $this->db->prepare($sql);
