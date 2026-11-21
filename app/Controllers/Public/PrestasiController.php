@@ -77,7 +77,7 @@ class PrestasiController
                 'meta' => $meta,
                 'jsonld' => $jsonld,
                 'bodyClass' => 'page-prestasi',
-                'scripts' => '<script defer src="/assets/js/pages/prestasi.js"></script>',
+                'scripts' => '<script defer src="/assets/js/pages/prestasi.js?v=1.0.4"></script>',
             ]);
             $response->html($html);
             return;
