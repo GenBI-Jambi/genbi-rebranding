@@ -169,6 +169,30 @@
     document.querySelector('#save-language').addEventListener('click', () => Admin.showToast('Language data disimpan pada mode simulasi.'));
   }
 
+  function resolveCategoryBanner(item) {
+    const name = String(item.name || item.category_name || '').trim();
+    const banner = String(item.banner || item.category_banner || '').trim();
+    const lower = name.toLowerCase();
+
+    if (/^(https?:)?\/\//i.test(banner)) {
+      return { url: banner, badge: 'Custom', hasImage: true };
+    }
+    if (banner && !banner.includes('category-banner-')) {
+      const clean = banner.replace(/^\/+/, '').replace(/^uploads\//, '');
+      return { url: `/uploads/${clean}`, badge: 'Uploaded', hasImage: true };
+    }
+
+    if (lower.includes('uin')) return { url: '/assets/images/banner_unja_uin_bi.png', badge: 'Komsat UIN STS', hasImage: true };
+    if (lower.includes('unja') || lower.includes('universitas jambi')) return { url: '/assets/images/banner_unja_uin_bi.png', badge: 'Komsat UNJA', hasImage: true };
+    if (lower.includes('bank indonesia')) return { url: '/assets/images/banner-genbi-bi.jpg', badge: 'Bank Indonesia', hasImage: true };
+    if (lower.includes('wilayah')) return { url: '/assets/images/banner-genbi-bi.jpg', badge: 'GenBI Wilayah', hasImage: true };
+    if (lower.includes('kolaborasi') || lower.includes('prestasi') || lower.includes('pengumuman')) {
+      return { url: '/assets/images/banner-genbi-bi.jpg', badge: 'GenBI Official', hasImage: true };
+    }
+
+    return { url: '/assets/images/banner-genbi-bi.jpg', badge: 'GenBI Official', hasImage: true };
+  }
+
   async function renderCategoryList() {
     const ssrList = document.querySelector('#admin-category-list[data-ssr="true"]');
     if (ssrList) {
@@ -184,25 +208,51 @@
         items = payload.data.map((item) => ({
           id: item.id || item.category_id,
           name: item.name || item.category_name || '',
-          banner: normalizeAdminImageUrl(item.banner || item.category_banner || ''),
+          banner: item.banner || item.category_banner || '',
         }));
       }
     } catch (error) { /* static fallback */ }
 
     body.innerHTML = `
-      <section class="admin-card p-4 md:p-6">
+      <section class="admin-card p-4 sm:p-5 md:p-6">
         ${renderSearchToolbar('Category')}
         <div class="admin-responsive-table mt-5">
           <table class="cms-table">
-            <thead><tr><th>SL</th><th>Category Name</th><th>Category Banner</th><th>Action</th></tr></thead>
-            <tbody>${items.map((item, index) => `
+            <thead>
               <tr>
-                <td>${index + 1}</td>
-                <td><strong>${item.name}</strong></td>
-                <td>${item.banner ? `<img src="${escape(item.banner)}" class="table-banner" alt="${escape(item.name)}" />` : '<span class="text-neutral-500">Belum ada banner</span>'}</td>
-                <td><div class="flex gap-2"><button class="cms-action edit" type="button" data-category-edit="${item.id}" data-category-name="${escape(item.name)}">Edit</button><button class="cms-action delete" type="button" data-category-delete="${item.id}">Delete</button></div></td>
+                <th class="w-16">SL</th>
+                <th>Category Name</th>
+                <th>Category Banner</th>
+                <th class="w-36 text-right sm:text-left">Action</th>
               </tr>
-            `).join('')}</tbody>
+            </thead>
+            <tbody>${items.map((item, index) => {
+              const b = resolveCategoryBanner(item);
+              return `
+                <tr>
+                  <td class="admin-cell-index">${index + 1}</td>
+                  <td><strong class="text-neutral-900">${escape(item.name)}</strong></td>
+                  <td>
+                    ${b.hasImage && b.url ? `
+                      <div class="category-banner-box" title="${escape(item.name)} - ${b.badge}">
+                        <img src="${escape(b.url)}" class="category-banner-img" alt="${escape(item.name)}" loading="lazy" onerror="this.closest('.category-banner-box').classList.add('is-fallback');" />
+                        <span class="category-banner-badge">${b.badge}</span>
+                        <div class="category-banner-fallback">
+                          <svg class="h-4 w-4 shrink-0 text-[#114b9a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+                          <span class="truncate">${escape(item.name || 'GenBI')}</span>
+                        </div>
+                      </div>
+                    ` : `
+                      <div class="category-banner-empty" title="Belum ada banner untuk kategori ini">
+                        <svg class="h-4 w-4 shrink-0 text-[#114b9a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+                        <span>Tanpa Banner</span>
+                      </div>
+                    `}
+                  </td>
+                  <td><div class="flex gap-2"><button class="cms-action edit" type="button" data-category-edit="${item.id}" data-category-name="${escape(item.name)}">Edit</button><button class="cms-action delete" type="button" data-category-delete="${item.id}">Delete</button></div></td>
+                </tr>
+              `;
+            }).join('')}</tbody>
           </table>
         </div>
       </section>

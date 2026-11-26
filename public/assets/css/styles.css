@@ -3067,6 +3067,134 @@ html[data-theme^="dark-"] .pager-button[aria-disabled="true"] {
   border-radius: 0.75rem;
 }
 
+/* ==========================================================================
+   CATEGORY BANNER - MODERN PREVIEW & PLACEHOLDER STYLING
+   ========================================================================== */
+.category-banner-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 190px;
+  max-width: 100%;
+  height: 52px;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  background: #f8fafc;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.category-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+  display: block;
+}
+
+.cms-table tr:hover .category-banner-img {
+  transform: scale(1.04);
+}
+
+.category-banner-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 6px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.category-banner-box .category-banner-fallback {
+  display: none;
+}
+
+.category-banner-box.is-fallback .category-banner-img,
+.category-banner-box.is-fallback .category-banner-badge {
+  display: none !important;
+}
+
+.category-banner-box.is-fallback .category-banner-fallback {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: 100%;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background: linear-gradient(135deg, rgba(17, 75, 154, 0.06) 0%, rgba(17, 75, 154, 0.02) 100%);
+}
+
+.category-banner-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 190px;
+  max-width: 100%;
+  height: 52px;
+  padding: 0 0.85rem;
+  border-radius: 0.75rem;
+  border: 1.5px dashed rgba(17, 75, 154, 0.22);
+  background: linear-gradient(135deg, rgba(17, 75, 154, 0.04) 0%, rgba(17, 75, 154, 0.01) 100%);
+  color: #64748b;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.category-banner-empty svg {
+  flex-shrink: 0;
+  color: #114b9a;
+}
+
+@media (max-width: 640px) {
+  .category-banner-box,
+  .category-banner-empty {
+    width: 160px;
+    height: 46px;
+  }
+}
+
+html[data-theme^="dark-"] .category-banner-box {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme^="dark-"] .category-banner-empty {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  color: #94a3b8;
+}
+
+html[data-theme^="dark-"] .category-banner-empty svg {
+  color: #60a5fa;
+}
+
+html[data-theme^="dark-"] .category-banner-box.is-fallback .category-banner-fallback {
+  background: rgba(255, 255, 255, 0.03);
+  color: #cbd5e1;
+}
+
+html[data-theme^="dark-"] .category-banner-box.is-fallback .category-banner-fallback svg {
+  color: #60a5fa;
+}
+
+
 .cms-action {
   display: inline-flex;
   align-items: center;
