@@ -164,10 +164,7 @@
 
   const links = [
     { key: 'dashboard', label: 'Dashboard', href: adminUrl('dashboard'), icon: 'dashboard' },
-    { key: 'settings', label: 'Settings', href: adminUrl('settings'), icon: 'settings', children: [
-      { key: 'settings', label: 'Identity', href: adminUrl('settings') },
-      { key: 'theme', label: 'Theme', href: adminUrl('settings') + '#theme' }
-    ] },
+    { key: 'settings', label: 'Settings', href: adminUrl('settings'), icon: 'settings' },
     { key: 'page', label: 'Page', href: adminUrl('page'), icon: 'page' },
     { key: 'feature', label: 'Program Utama', href: adminUrl('feature'), icon: 'feature' },
     { key: 'event', label: 'Agenda', href: adminUrl('event'), icon: 'event' },
@@ -266,20 +263,23 @@
     const label = flatLinks.find((item) => item.key === active)?.label || 'Admin';
     root.innerHTML = `
       <div class="admin-topbar-inner">
-        <div class="flex items-center gap-3">
-          <button id="open-admin-menu" class="btn-icon admin-menu-button lg:hidden" aria-label="Open admin menu">${window.GenBIApp.icon('menu')}</button>
-          <div>
-            <p class="admin-topbar-kicker">Admin Panel</p>
-            <h1 class="admin-topbar-title">${label}</h1>
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+          <button id="open-admin-menu" class="btn-icon admin-menu-button lg:hidden shrink-0" aria-label="Open admin menu">${window.GenBIApp.icon('menu')}</button>
+          <div class="min-w-0">
+            <p class="admin-topbar-kicker hidden sm:block">Admin Panel</p>
+            <h1 class="admin-topbar-title truncate">${label}</h1>
           </div>
         </div>
-        <div class="flex items-center gap-3">
-          <a href="${pageUrl('home')}" class="admin-visit-link">Visit Website</a>
+        <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <a href="${pageUrl('home')}" class="admin-visit-link hidden sm:inline-flex">Visit Website</a>
+          <a href="${pageUrl('home')}" class="admin-visit-link sm:hidden px-2.5 py-1.5" title="Visit Website" aria-label="Visit Website">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+          </a>
           <form method="POST" action="/admin/logout" class="inline">
             <input type="hidden" name="_csrf_token" value="${(window.GenBIAPI && window.GenBIAPI.getCsrfToken && window.GenBIAPI.getCsrfToken()) || document.querySelector('meta[name=csrf-token]')?.content || ''}">
-            <button type="submit" class="admin-visit-link text-red-200 hover:text-white" title="Logout">Logout</button>
+            <button type="submit" class="admin-visit-link text-red-200 hover:text-white px-2.5 sm:px-4" title="Logout">Logout</button>
           </form>
-          <span class="admin-top-logo"><img src="${site.logo}" alt="${site.name}" /></span>
+          <span class="admin-top-logo shrink-0"><img src="${site.logo}" alt="${site.name}" /></span>
         </div>
       </div>
     `;

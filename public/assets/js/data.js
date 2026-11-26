@@ -278,8 +278,7 @@ const settingTabs = [
   { key: 'email', label: 'Email', icon: 'mail' },
   { key: 'banner', label: 'Banner', icon: 'image' },
   { key: 'sidebar', label: 'Sidebar', icon: 'list' },
-  { key: 'color', label: 'Color', icon: 'swatch' },
-  { key: 'theme', label: 'Theme', icon: 'sparkles' }
+  { key: 'color', label: 'Color', icon: 'swatch' }
 ];
 
 const adminActivity = [

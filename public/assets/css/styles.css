@@ -1122,6 +1122,145 @@ body.page-leaving {
   box-shadow: 0 24px 80px rgb(15 23 42 / 0.08);
 }
 
+
+/* ==========================================================================
+   SETTINGS FORMS & INPUTS - PROPER MARGINS, SPACING & RESPONSIVE DESIGN
+   ========================================================================== */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  width: 100%;
+}
+
+.settings-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .settings-form-grid {
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .settings-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem 1.75rem;
+  }
+  .settings-form[data-endpoint="logo"] .settings-form-grid,
+  .settings-form[data-endpoint="favicon"] .settings-form-grid,
+  .settings-form-grid.is-banner {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settings-field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+}
+
+.settings-field:has(textarea),
+.settings-field:has(.min-h-32),
+.settings-upload-card,
+.settings-banner-preview-grid,
+.settings-hero-preview {
+  grid-column: 1 / -1;
+}
+
+.settings-field-label {
+  display: block !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.8125rem !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.settings-input {
+  width: 100% !important;
+  border-radius: 0.875rem !important;
+  border: 1.5px solid rgba(15, 23, 42, 0.12) !important;
+  background: #ffffff !important;
+  padding: 0.75rem 1rem !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.5 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: border-color 180ms ease, box-shadow 180ms ease !important;
+  box-sizing: border-box !important;
+}
+
+.settings-input:focus {
+  border-color: #114b9a !important;
+  box-shadow: 0 0 0 3px rgba(17, 75, 154, 0.10) !important;
+  outline: none !important;
+}
+
+.settings-upload-card {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+  padding: 1.25rem !important;
+  border-radius: 1.125rem !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  background: #f8fafc !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03) !important;
+}
+
+@media (min-width: 640px) {
+  .settings-upload-card {
+    padding: 1.5rem !important;
+    gap: 1.25rem !important;
+  }
+}
+
+.settings-upload-title {
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.settings-upload-note {
+  font-size: 0.8125rem !important;
+  color: #64748b !important;
+  margin-top: 0.25rem !important;
+  line-height: 1.45 !important;
+}
+
+.settings-file-input {
+  font-size: 0.8125rem !important;
+  color: #64748b !important;
+}
+
+#settings-tabs {
+  display: flex !important;
+  gap: 0.5rem !important;
+  overflow-x: auto !important;
+  padding-bottom: 0.5rem !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+}
+
+#settings-tabs .admin-tab {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  white-space: nowrap !important;
+  padding: 0.6rem 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 9999px !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+}
+
 .settings-upload-head {
   display: flex;
   align-items: center;
@@ -2692,6 +2831,33 @@ html[data-theme^="dark-"] .pager-button[aria-disabled="true"] {
   justify-content: space-between;
   gap: 1rem;
   padding-inline: 1rem;
+}
+
+
+@media (max-width: 640px) {
+  .admin-topbar-inner {
+    height: 3.75rem !important;
+    padding-inline: 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+  .admin-top-logo {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    padding: 0.25rem !important;
+    border-radius: 0.65rem !important;
+  }
+  .admin-topbar-title {
+    font-size: 1.05rem !important;
+    line-height: 1.25 !important;
+  }
+  .admin-visit-link {
+    min-height: 2.1rem !important;
+    font-size: 0.75rem !important;
+  }
+  .admin-menu-button {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+  }
 }
 
 @media (min-width: 768px) {

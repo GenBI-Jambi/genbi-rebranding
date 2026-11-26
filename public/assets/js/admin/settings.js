@@ -4,25 +4,33 @@
   const fallback = window.GenBIData || {};
   const bootstrap = window.GenBISettingsBootstrap || {};
   const initialSite = bootstrap.site || window.GenBISiteSettings || fallback.site || {};
-  const initialTheme = bootstrap.theme || { publicKey: 'genbi', adminKey: 'genbi', themes: window.GenBIThemeRegistry?.themes || [] };
   const tabs = fallback.settingTabs || [];
   const { renderAdminShell, icon, showToast, escapeHtml } = window.GenBIAdmin;
   const API = window.GenBIAPI;
+
+  function resolveActiveTab() {
+    const hash = (window.location.hash || '').replace('#', '').toLowerCase();
+    const validKeys = tabs.map((t) => t.key);
+    return validKeys.includes(hash) ? hash : (validKeys[0] || 'logo');
+  }
+
   const state = {
-    active: window.location.hash === '#theme' ? 'theme' : 'logo',
+    active: resolveActiveTab(),
     site: initialSite,
-    theme: {
-      publicKey: initialTheme.publicKey || 'genbi',
-      adminKey: initialTheme.adminKey || 'genbi',
-      themes: initialTheme.themes || [],
-      savedAdminKey: initialTheme.adminKey || 'genbi',
-    },
   };
 
-  renderAdminShell(state.active === 'theme' ? 'theme' : 'settings');
-  ensureThemePreviewStyle();
+  renderAdminShell('settings');
   renderTabs();
   renderPanel();
+
+  window.addEventListener('hashchange', () => {
+    const newTab = resolveActiveTab();
+    if (newTab !== state.active) {
+      state.active = newTab;
+      renderTabs();
+      renderPanel();
+    }
+  });
 
   function renderTabs() {
     const root = document.querySelector('#settings-tabs');
@@ -37,9 +45,7 @@
     root.querySelectorAll('button').forEach((button) => {
       button.addEventListener('click', () => {
         state.active = button.dataset.tab;
-        if (state.active === 'theme') {
-          history.replaceState(null, '', '#theme');
-        }
+        history.replaceState(null, '', '#' + state.active);
         renderTabs();
         renderPanel();
       });
@@ -52,8 +58,8 @@
         <header class="admin-editor-head">
           <div>
             <p class="eyebrow">${title}</p>
-            <h2 class="serif mt-3 text-4xl font-semibold tracking-tight text-[rgb(var(--text-primary))]">${title}</h2>
-            <p class="mt-4 max-w-3xl text-base leading-7 text-[rgb(var(--text-secondary))]">${description}</p>
+            <h2 class="serif mt-3 text-3xl sm:text-4xl font-semibold tracking-tight text-[rgb(var(--text-primary))]">${title}</h2>
+            <p class="mt-3 max-w-3xl text-sm sm:text-base leading-relaxed sm:leading-7 text-[rgb(var(--text-secondary))]">${description}</p>
           </div>
         </header>
         <div class="admin-editor-canvas">${content}</div>
@@ -75,11 +81,13 @@
           ${value ? `<img src="${escapeHtml(value)}" alt="${escapeHtml(label)}" class="settings-upload-preview">` : ''}
           <div>
             <p class="settings-upload-title">${label}</p>
-            <p class="settings-upload-note">Unggah gambar lalu simpan tab ini.</p>
+            <p class="settings-upload-note">Unggah gambar baru atau masukkan URL langsung, lalu simpan perubahan.</p>
           </div>
         </div>
-        <input class="input-soft settings-input" data-field="${key}" type="text" value="${escapeHtml(value || '')}" placeholder="/uploads/branding/...">
-        <input class="admin-file-input settings-file-input" type="file" data-upload-for="${key}" accept="image/*,.ico,.svg">
+        <div class="grid gap-3 mt-1">
+          <input class="input-soft settings-input" data-field="${key}" type="text" value="${escapeHtml(value || '')}" placeholder="/uploads/branding/...">
+          <input class="admin-file-input settings-file-input" type="file" data-upload-for="${key}" accept="image/*,.ico,.svg">
+        </div>
       </div>
     `;
   }
@@ -140,7 +148,6 @@
       ]),
       sidebar: () => renderFormPanel('Sidebar', 'Heading sidebar untuk halaman publik.', 'sidebar', [field('News Heading', 'site.sidebar_heading_news', state.site.sidebar?.news || ''), field('Recent Heading', 'site.sidebar_heading_recent', state.site.sidebar?.recent || ''), field('Upcoming Heading', 'site.sidebar_heading_upcoming', state.site.sidebar?.upcoming || ''), field('Past Heading', 'site.sidebar_heading_past', state.site.sidebar?.past || ''), field('Contact Heading', 'site.sidebar_heading_contact', state.site.sidebar?.contact || '')]),
       color: () => renderFormPanel('Color', 'Override warna brand utama yang disimpan di settings.', 'color', [field('Primary', 'site.color_primary', state.site.colors?.primary || '#114b9a'), field('Primary Hover', 'site.color_primary_hover', state.site.colors?.primaryHover || '#0c3572'), field('Primary Soft', 'site.color_primary_soft', state.site.colors?.primarySoft || '#eef6ff')]),
-      theme: renderThemePanel,
     };
     root.innerHTML = (panels[state.active] || panels.logo)();
     bindPanel(root);
@@ -152,56 +159,9 @@
         <div class="settings-form-grid ${endpoint === 'banner' ? 'is-banner' : ''}">
           ${fields.join('')}
         </div>
-        <div class="pt-2"><button type="submit" class="btn btn-primary">Save ${title}</button></div>
+        <div class="pt-3"><button type="submit" class="btn btn-primary">Simpan ${title}</button></div>
       </form>
     `);
-  }
-
-  function renderThemePanel() {
-    return panelLayout('Theme', 'Tema publik dan admin disimpan terpisah. Preview admin hanya berubah lokal sampai disimpan.', `
-      <div class="grid gap-8">
-        <section>
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <p class="text-sm font-semibold text-[rgb(var(--text-primary))]">Public site</p>
-              <p class="text-sm text-[rgb(var(--text-secondary))]">Tema untuk halaman publik.</p>
-            </div>
-            <span class="editor-status-pill">${escapeHtml(state.theme.publicKey)}</span>
-          </div>
-          <div class="theme-card-grid">${renderThemeCards('public')}</div>
-        </section>
-        <section>
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <p class="text-sm font-semibold text-[rgb(var(--text-primary))]">Admin panel</p>
-              <p class="text-sm text-[rgb(var(--text-secondary))]">Tema untuk shell admin.</p>
-            </div>
-            <span class="editor-status-pill">${escapeHtml(state.theme.adminKey)}</span>
-          </div>
-          <div class="theme-card-grid">${renderThemeCards('admin')}</div>
-        </section>
-        <div class="flex flex-wrap items-center gap-3">
-          <button type="button" class="btn btn-primary" data-save-theme>Save themes</button>
-          <button type="button" class="btn btn-secondary" data-reset-theme>Reset to GenBI</button>
-        </div>
-      </div>
-    `);
-  }
-
-  function renderThemeCards(scope) {
-    return state.theme.themes.map((theme) => {
-      const selected = scope === 'public' ? state.theme.publicKey === theme.key : state.theme.adminKey === theme.key;
-      return `
-        <button type="button" class="theme-card ${selected ? 'is-selected' : ''}" data-theme-scope="${scope}" data-theme-key="${theme.key}">
-          <div class="theme-card-head">
-            <strong class="theme-card-name">${escapeHtml(theme.name)}</strong>
-            <span class="theme-card-mode">${escapeHtml(theme.mode)}</span>
-          </div>
-          <div class="theme-card-swatches">${(theme.swatches || []).map((swatch) => `<span class="theme-card-swatch" style="background:${escapeHtml(swatch)}"></span>`).join('')}</div>
-          <p class="theme-card-note">${escapeHtml(theme.personality || '')}</p>
-        </button>
-      `;
-    }).join('');
   }
 
   function bindPanel(root) {
@@ -241,69 +201,6 @@
         if (target) target.value = json.data.url;
       });
     });
-
-    root.querySelectorAll('[data-theme-scope]').forEach((button) => {
-      button.addEventListener('mouseenter', () => previewTheme(button.dataset.themeScope, button.dataset.themeKey));
-      button.addEventListener('focus', () => previewTheme(button.dataset.themeScope, button.dataset.themeKey));
-      button.addEventListener('click', () => {
-        if (button.dataset.themeScope === 'public') state.theme.publicKey = button.dataset.themeKey;
-        if (button.dataset.themeScope === 'admin') state.theme.adminKey = button.dataset.themeKey;
-        renderPanel();
-      });
-    });
-
-    root.querySelector('[data-save-theme]')?.addEventListener('click', saveThemes);
-    root.querySelector('[data-reset-theme]')?.addEventListener('click', () => {
-      state.theme.publicKey = 'genbi';
-      state.theme.adminKey = 'genbi';
-      document.documentElement.dataset.theme = 'genbi';
-      applyThemePreview('genbi');
-      renderPanel();
-    });
-    root.addEventListener('mouseleave', restoreAdminThemePreview);
-  }
-
-  function previewTheme(scope, key) {
-    if (scope === 'admin') {
-      document.documentElement.dataset.theme = key;
-      applyThemePreview(key);
-    }
-  }
-
-  function restoreAdminThemePreview() {
-    document.documentElement.dataset.theme = state.theme.savedAdminKey;
-    applyThemePreview(state.theme.savedAdminKey);
-  }
-
-  async function saveThemes() {
-    const json = await postJson('/admin/settings/theme', {
-      'theme.public_key': state.theme.publicKey,
-      'theme.admin_key': state.theme.adminKey,
-    });
-    if (json && json.ok) {
-      state.theme.savedAdminKey = state.theme.adminKey;
-      document.documentElement.dataset.theme = state.theme.adminKey;
-      applyThemePreview(state.theme.adminKey);
-      showToast('Theme berhasil disimpan.');
-    }
-  }
-
-  function ensureThemePreviewStyle() {
-    if (document.querySelector('#admin-theme-preview-style')) return;
-    const style = document.createElement('style');
-    style.id = 'admin-theme-preview-style';
-    document.head.appendChild(style);
-    applyThemePreview(state.theme.savedAdminKey);
-  }
-
-  function applyThemePreview(key) {
-    const style = document.querySelector('#admin-theme-preview-style');
-    const theme = state.theme.themes.find((item) => item.key === key);
-    if (!style || !theme || !theme.tokens) return;
-    const css = Object.entries(theme.tokens)
-      .map(([token, value]) => `--${token}:${value};`)
-      .join('');
-    style.textContent = `:root,html[data-theme="${key}"]{${css}}`;
   }
 
   async function postJson(url, payload) {
