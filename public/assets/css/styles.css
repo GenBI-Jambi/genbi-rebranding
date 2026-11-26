@@ -10798,3 +10798,110 @@ html[data-theme^="dark-"] .prestasi-detail-title {
 .admin-data-table-prestasi .admin-cell-title {
   vertical-align: middle !important;
 }
+
+
+/* Why Choose Us Icon Selector & Preview Box */
+.why-icon-preview-box {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  background: #f8faff;
+  border: 1px solid rgba(17, 75, 154, 0.12);
+  transition: all 180ms ease;
+}
+
+.why-icon-preview-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  color: #114b9a;
+  border: 1px solid rgba(17, 75, 154, 0.18);
+  box-shadow: 0 4px 12px rgba(17, 75, 154, 0.08);
+  flex-shrink: 0;
+}
+
+.why-icon-preview-circle svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.why-icon-preview-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.why-icon-preview-info strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.why-icon-preview-info small {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.1rem;
+}
+
+.why-icon-browse-btn {
+  flex-shrink: 0;
+  font-size: 0.78rem !important;
+  padding: 0.45rem 0.75rem !important;
+  border-radius: 0.625rem !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .why-icon-preview-box {
+    padding: 0.75rem 0.85rem;
+    gap: 0.65rem;
+  }
+  .why-icon-preview-circle {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+  .why-icon-preview-circle svg {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+  .why-icon-preview-info strong {
+    font-size: 0.85rem;
+  }
+  .why-icon-preview-info small {
+    font-size: 0.7rem;
+  }
+  .why-icon-browse-btn {
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+html[data-theme^="dark-"] .why-icon-preview-box {
+  background: #172033;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme^="dark-"] .why-icon-preview-circle {
+  background: #1e293b;
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme^="dark-"] .why-icon-preview-info strong {
+  color: #f8fafc;
+}
+
+html[data-theme^="dark-"] .why-icon-preview-info small {
+  color: #94a3b8;
+}

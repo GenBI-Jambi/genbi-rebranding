@@ -1328,7 +1328,8 @@
       bindSimpleSubmit('#faq-form', 'Submit FAQ?', 'FAQ ditambahkan pada mode simulasi.');
       return;
     }
-    if (prototype === 'why-choose-add' || prototype === 'why_choose-add') {
+    if (prototype === 'why-choose-add' || prototype === 'why_choose-add' || prototype === 'why-choose-edit' || prototype === 'why_choose-edit') {
+      setupWhyChooseIconPicker(root.querySelector('#why-form') || document.querySelector('#why-form'));
       bindSimpleSubmit('#why-form', 'Submit item edukasi?', 'Item edukasi ditambahkan pada mode simulasi.');
     }
   }
@@ -2367,6 +2368,61 @@
     bindDeleteButtons('Item edukasi akan dihapus dari daftar simulasi.');
   }
 
+  function setupWhyChooseIconPicker(form = document.querySelector('#why-form')) {
+    if (!form) return;
+    const select = form.querySelector('#why-icon-select');
+    const previewCircle = form.querySelector('#why-icon-preview-icon');
+    const previewName = form.querySelector('#why-icon-preview-name');
+    const browseBtn = form.querySelector('#why-browse-icons-btn');
+    if (!select || !previewCircle) return;
+
+    let isInternalUpdate = false;
+
+    const setIcon = (iconKey) => {
+      if (!iconKey) iconKey = 'bank';
+      let opt = Array.from(select.options).find((o) => o.value === iconKey);
+      if (!opt) {
+        opt = document.createElement('option');
+        opt.value = iconKey;
+        opt.textContent = `${iconKey} (Galeri)`;
+        select.appendChild(opt);
+      }
+      select.value = iconKey;
+      previewCircle.dataset.whyIconPreview = iconKey;
+      if (previewName) previewName.textContent = iconKey;
+      if (Admin?.icon) {
+        previewCircle.innerHTML = Admin.icon(iconKey, 'h-6 w-6');
+      }
+      isInternalUpdate = true;
+      select.dispatchEvent(new Event('change'));
+      isInternalUpdate = false;
+    };
+
+    select.addEventListener('change', () => {
+      if (isInternalUpdate) return;
+      const key = select.value || 'bank';
+      previewCircle.dataset.whyIconPreview = key;
+      if (previewName) previewName.textContent = key;
+      if (Admin?.icon) {
+        previewCircle.innerHTML = Admin.icon(key, 'h-6 w-6');
+      }
+    });
+
+    if (browseBtn) {
+      browseBtn.addEventListener('click', () => {
+        openFeatureIconModal(select.value || 'bank', (chosen) => {
+          setIcon(chosen);
+        }, browseBtn);
+      });
+    }
+
+    const initialKey = select.value || previewCircle.dataset.whyIconPreview || 'bank';
+    if (Admin?.icon) {
+      previewCircle.innerHTML = Admin.icon(initialKey, 'h-6 w-6');
+    }
+    if (previewName) previewName.textContent = initialKey;
+  }
+
   function renderWhyChooseEditor() {
     const body = renderShell('Add Why Choose Us', 'Tambahkan item edukasi dengan field editorial dan foto pendukung.', `<a href="${adminUrl('why-choose')}" class="btn btn-secondary">View All</a>`);
     body.innerHTML = `
@@ -2376,11 +2432,50 @@
           <article class="news-body-block smaller" contenteditable="true" data-placeholder="Isi penjelasan singkat..."></article>
         </main>
         <aside class="editor-config-sidebar">
-          <section class="config-card"><h2>Media</h2>${control('Icon', '<input class="config-input" placeholder="thumb, globe, clock..." />')}${control('Photo', '<input class="config-input" type="file" />')}</section>
+          <section class="config-card">
+            <h2>Media</h2>
+            <div class="config-field">
+              <span>Pilih Ikon Edukasi</span>
+              <select id="why-icon-select" name="icon" class="config-input js-admin-custom-select">
+                <optgroup label="Edukasi & Kebanksentralan">
+                  <option value="bank" selected>Bank / Kebanksentralan (bank)</option>
+                  <option value="banknotes">Uang Rupiah / Tunai (banknotes)</option>
+                  <option value="chart">Grafik / Inflasi & Ekonomi (chart)</option>
+                  <option value="qrCode">QRIS / Pembayaran Digital (qrCode)</option>
+                  <option value="scale">Stabilitas / Kebijakan (scale)</option>
+                  <option value="academic">Edukasi / Beasiswa (academic)</option>
+                </optgroup>
+                <optgroup label="Komunitas & Nilai GenBI">
+                  <option value="sparkles">Fitur Unggulan (sparkles)</option>
+                  <option value="users">Komunitas / Energi GenBI (users)</option>
+                  <option value="globe">Wawasan Global (globe)</option>
+                  <option value="clock">Akurasi & Waktu (clock)</option>
+                  <option value="lightBulb">Inovasi / Solusi (lightBulb)</option>
+                  <option value="shield">Integritas / Keamanan (shield)</option>
+                  <option value="trophy">Prestasi / Keunggulan (trophy)</option>
+                  <option value="heart">Dedikasi / Sosial (heart)</option>
+                  <option value="handThumbUp">Rekomendasi (handThumbUp)</option>
+                  <option value="rocket">Akselerasi / Masa Depan (rocket)</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="why-icon-preview-box mt-3" id="why-icon-preview-box">
+              <div class="why-icon-preview-circle" id="why-icon-preview-icon" data-why-icon-preview="bank">
+                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.5M4.5 21V10.5M2.25 21h19.5"/></svg>
+              </div>
+              <div class="why-icon-preview-info">
+                <strong id="why-icon-preview-name">bank</strong>
+                <small>Ikon terpilih untuk kartu edukasi</small>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm why-icon-browse-btn" id="why-browse-icons-btn" title="Buka Galeri Ikon Heroicons">Galeri Ikon</button>
+            </div>
+            ${control('Photo', '<input class="config-input" type="file" />')}
+          </section>
           <button type="submit" class="btn btn-primary w-full">Submit Item</button>
         </aside>
       </form>
     `;
+    setupWhyChooseIconPicker(body.querySelector('#why-form'));
     bindSimpleSubmit('#why-form', 'Submit item edukasi?', 'Item edukasi ditambahkan pada mode simulasi.');
   }
 

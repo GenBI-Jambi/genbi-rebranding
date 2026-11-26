@@ -766,6 +766,8 @@ HTML;
             'why_choose',
             'why-choose-add',
             'why_choose-add',
+            'why-choose-edit',
+            'why_choose-edit',
             'faq',
             'faq-add',
             'social',
