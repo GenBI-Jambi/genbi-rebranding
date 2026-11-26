@@ -183,7 +183,8 @@
       { key: 'buku-add', label: 'Tambah Buku', href: adminUrl('buku-add') }
     ] },
     { key: 'prestasi', label: 'Prestasi', href: adminUrl('prestasi'), icon: 'feature', children: [
-      { key: 'prestasi-list', label: 'Prestasi', href: adminUrl('prestasi') },
+      { key: 'prestasi-list', label: 'Daftar Prestasi', href: adminUrl('prestasi') },
+      { key: 'prestasi-add', label: 'Tambah Prestasi', href: adminUrl('prestasi-add') },
       { key: 'prestasi-token', label: 'Token Form', href: adminUrl('prestasi-token') }
     ] },
     { key: 'presensi', label: 'Presensi', href: adminUrl('presensi'), icon: 'qrCode', children: [
@@ -241,13 +242,25 @@
         </a>
         <nav class="mt-6 grid gap-1">
           ${links.map((item) => {
-            const isActive = item.key === active || item.children?.some((child) => child.key === active);
+            const isChildActive = (child) => {
+              const currentPath = window.location.pathname.replace(/\/$/, '');
+              const childPath = new URL(child.href, window.location.origin).pathname.replace(/\/$/, '');
+              if (currentPath && childPath && currentPath === childPath) return true;
+              if (child.key === active) return true;
+              if (active === 'prestasi-edit' && child.key === 'prestasi-list') return true;
+              if (active === 'pengumuman-edit' && child.key === 'pengumuman-list') return true;
+              if (active === 'buku-edit' && child.key === 'buku-list') return true;
+              if (active === 'news-edit' && child.key === 'news-list') return true;
+              if ((child.key === `${active}-list` || child.key === `${active}-rekap`) && currentPath.endsWith(`/${active}`)) return true;
+              return false;
+            };
+            const isActive = item.key === active || item.children?.some(isChildActive) || Boolean(active && active.startsWith(`${item.key}-`));
             return `
               <div class="admin-nav-group ${isActive ? 'is-open' : ''}">
                 <a href="${item.href}" class="admin-link ${isActive ? 'admin-link-active' : ''}">
                   ${icon(item.icon)}<span>${item.label}</span>${item.children ? icon('chevronRight', 'admin-nav-caret ml-auto') : ''}
                 </a>
-                ${item.children ? `<div class="admin-subnav">${item.children.map((child) => `<a href="${child.href}" class="admin-sub-link ${child.key === active ? 'is-active' : ''}">${child.label}</a>`).join('')}</div>` : ''}
+                ${item.children ? `<div class="admin-subnav">${item.children.map((child) => `<a href="${child.href}" class="admin-sub-link ${isChildActive(child) ? 'is-active' : ''}">${child.label}</a>`).join('')}</div>` : ''}
               </div>
             `;
           }).join('')}
@@ -341,12 +354,23 @@
     modalRoot.insertAdjacentHTML('beforeend', `
       <div id="admin-confirm-modal" class="admin-confirm hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
         <div class="admin-confirm-panel">
-          <div class="admin-confirm-icon">${icon('trash')}</div>
-          <h2 id="confirm-title" class="serif text-3xl font-semibold tracking-tight text-[rgb(var(--text-primary))]">Konfirmasi tindakan</h2>
-          <div id="confirm-message" class="admin-confirm-message mt-3 text-sm leading-7 text-[rgb(var(--text-secondary))]">Apakah kamu yakin?</div>
-          <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
-            <button type="button" id="confirm-cancel" class="btn btn-secondary">Batal</button>
-            <button type="button" id="confirm-ok" class="btn btn-primary">Ya, lanjutkan</button>
+          <div class="admin-confirm-header">
+            <div class="admin-confirm-header-left">
+              <div class="admin-confirm-icon-wrap">
+                <div class="admin-confirm-icon">${icon('trash')}</div>
+              </div>
+              <h2 id="confirm-title" class="serif text-xl sm:text-2xl font-semibold tracking-tight text-[rgb(var(--text-primary))]">Konfirmasi tindakan</h2>
+            </div>
+            <button type="button" id="confirm-close-btn" class="admin-confirm-close-btn" aria-label="Tutup modal">
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor"><path d="M4.5 4.5l11 11M15.5 4.5l-11 11" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <div id="confirm-message" class="admin-confirm-message text-sm leading-7 text-[rgb(var(--text-secondary))]">Apakah kamu yakin?</div>
+          <div class="admin-confirm-footer">
+            <div class="admin-confirm-footer-actions">
+              <button type="button" id="confirm-cancel" class="btn btn-secondary">Batal</button>
+              <button type="button" id="confirm-ok" class="btn btn-primary">Ya, lanjutkan</button>
+            </div>
           </div>
         </div>
       </div>
@@ -359,6 +383,7 @@
     confirmText = 'Ya, lanjutkan',
     cancelText = 'Batal',
     danger = false,
+    icon: showIcon = null,
     html = false,
     panelClass = '',
   } = {}) {
@@ -369,31 +394,52 @@
       const panel = modal.querySelector('.admin-confirm-panel');
       const ok = modal.querySelector('#confirm-ok');
       const cancel = modal.querySelector('#confirm-cancel');
+      const closeBtn = modal.querySelector('#confirm-close-btn');
       const messageNode = modal.querySelector('#confirm-message');
+      const iconWrap = modal.querySelector('.admin-confirm-icon-wrap');
+
       modal.querySelector('#confirm-title').textContent = title;
       messageNode[html ? 'innerHTML' : 'textContent'] = message;
       ok.textContent = confirmText;
       cancel.textContent = cancelText;
+
+      if (iconWrap) {
+        if (showIcon === false || (!showIcon && panelClass.includes('prestasi-detail-dialog'))) {
+          iconWrap.classList.add('hidden');
+        } else if (showIcon === true || danger) {
+          iconWrap.classList.remove('hidden');
+        } else {
+          iconWrap.classList.add('hidden');
+        }
+      }
+
       ok.className = danger ? 'btn btn-danger' : 'btn btn-primary';
-      panel.className = `admin-confirm-panel ${panelClass}`.trim();
+      panel.className = `admin-confirm-panel ${danger ? 'is-danger' : ''} ${panelClass}`.trim();
+
       const close = (value) => {
         panel.classList.remove('is-open');
         panel.classList.remove('is-wide');
         window.setTimeout(() => modal.classList.add('hidden'), 120);
         ok.removeEventListener('click', onOk);
         cancel.removeEventListener('click', onCancel);
+        closeBtn?.removeEventListener('click', onClose);
         modal.removeEventListener('click', onBackdrop);
         window.removeEventListener('keydown', onKey);
         resolve(value);
       };
+
       const onOk = () => close(true);
       const onCancel = () => close(false);
+      const onClose = () => close(false);
       const onBackdrop = (event) => { if (event.target === modal) close(false); };
       const onKey = (event) => { if (event.key === 'Escape') close(false); };
+
       ok.addEventListener('click', onOk);
       cancel.addEventListener('click', onCancel);
+      closeBtn?.addEventListener('click', onClose);
       modal.addEventListener('click', onBackdrop);
       window.addEventListener('keydown', onKey);
+
       modal.classList.remove('hidden');
       if (panelClass.includes('is-wide')) panel.classList.add('is-wide');
       window.setTimeout(() => panel.classList.add('is-open'), 20);

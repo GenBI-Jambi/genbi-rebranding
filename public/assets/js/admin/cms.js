@@ -72,7 +72,7 @@
     'https://official.genbijambi.com/storage/team-members/Depi-Susanti.png'
   ];
 
-  const prestasiCategories = ['QRIS', 'KTI', 'Essay', 'Inovasi Desa', 'Kreativitas', 'Ekonomi Syariah'];
+  const prestasiCategories = ['Lomba Bank Indonesia', 'Karya Tulis Ilmiah', 'Belmawa', 'Satria Data', 'ONMIPA', 'Pimnas', 'PKM', 'Custom'];
 
   const hasSsrPrototype = () => Boolean(document.querySelector('#admin-prototype-root[data-ssr="true"]'));
 
@@ -83,10 +83,10 @@
     'comment-setting': () => { Admin.renderAdminShell('comment-setting'); document.querySelector('#comment-setting-form[data-ssr="true"]') ? bindSsrCommentSettings() : renderCommentSettings(); },
     news: () => { Admin.renderAdminShell('news-list'); mode === 'editor' ? renderNewsEditor(false) : renderNewsList(); },
     'news-edit': () => { Admin.renderAdminShell('news-list'); renderNewsEditor(true); },
-    prestasi: () => { Admin.renderAdminShell('prestasi'); mode === 'editor' ? renderPrestasiEditor(false) : renderPrestasiList(); },
-    'prestasi-add': () => { Admin.renderAdminShell('prestasi'); renderPrestasiEditor(false); },
-    'prestasi-edit': () => { Admin.renderAdminShell('prestasi'); renderPrestasiEditor(true); },
-    'prestasi-token': () => { Admin.renderAdminShell('prestasi'); renderPrestasiTokenList(); },
+    prestasi: () => { Admin.renderAdminShell('prestasi-list'); mode === 'editor' ? renderPrestasiEditor(false) : renderPrestasiList(); },
+    'prestasi-add': () => { Admin.renderAdminShell('prestasi-add'); renderPrestasiEditor(false); },
+    'prestasi-edit': () => { Admin.renderAdminShell('prestasi-list'); renderPrestasiEditor(true); },
+    'prestasi-token': () => { Admin.renderAdminShell('prestasi-token'); renderPrestasiTokenList(); },
     event: () => { Admin.renderAdminShell('event'); mode === 'editor' ? renderEventEditor() : renderEventList(); },
     'event-edit': () => { Admin.renderAdminShell('event'); renderEventEditor(); },
     slider: () => { Admin.renderAdminShell('slider'); hasSsrPrototype() ? bindSsrPrototype() : (mode === 'editor' ? renderSliderEditor() : renderSliderList()); },
@@ -2904,16 +2904,7 @@
       bindPrestasiDeleteButtons();
       bindPrestasiApproveButtons();
       bindPrestasiDetailButtons();
-      // Bind search form Enter key
-      const searchInput = document.querySelector('#prestasi-search');
-      if (searchInput) {
-        searchInput.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            document.querySelector('#prestasi-filter-form')?.submit();
-          }
-        });
-      }
+      bindPrestasiFilter();
       return;
     }
 
@@ -3053,30 +3044,43 @@
       const status = item.status || 'draft';
       const image = item.image || item.foto_prestasi || '';
       const statusClass = status === 'published' ? 'cms-pill-green' : status === 'draft' ? 'cms-pill-yellow' : '';
-      const approveButton = status !== 'published' ? `<button class="cms-action edit" data-approve-prestasi="${id}">Approve</button>` : '';
+      const approveButton = status !== 'published' ? `<button class="btn btn-primary btn-sm whitespace-nowrap shrink-0" data-approve-prestasi="${id}">Approve</button>` : '';
+
+      const catWords = category.split(/\s+/).filter(Boolean);
+      const catDisplay = catWords.length > 3 ? catWords.slice(0, 3).join(' ') + '...' : category;
 
       return `
         <tr>
-          <td>${offset + index + 1}</td>
-          <td>
-            <div class="flex items-center gap-3">
-              ${image ? `<img src="${image.startsWith('http') || image.startsWith('/') ? image : '/uploads/prestasi/' + image}" class="table-thumb rounded" alt="${escape(title)}" />` : ''}
-              <div>
+          <td class="admin-cell-index text-center align-middle">${offset + index + 1}</td>
+          <td class="admin-cell-title align-middle">
+            <div class="admin-table-media">
+              ${image ? `<img src="${image.startsWith('http') || image.startsWith('/') ? image : '/uploads/prestasi/' + image}" class="table-thumb rounded" alt="${escape(title)}" />` : '<span class="admin-thumb-placeholder">No image</span>'}
+              <div class="admin-table-title">
                 <strong>${escape(title)}</strong>
-                <p class="mt-1 text-xs text-neutral-500">${escape(item.description || item.deskripsi_singkat || '').slice(0, 60)}</p>
+                <p>${escape(item.description || item.deskripsi_singkat || '').slice(0, 90)}</p>
               </div>
             </div>
           </td>
-          <td>${escape(name)}</td>
-          <td><span class="cms-pill">${escape(category)}</span></td>
-          <td>${escape(year)}</td>
-          <td>${escape(institution)}</td>
-          <td><span class="cms-pill ${statusClass}">${status}</span></td>
-          <td>
-            <div class="flex gap-2">
+          <td class="admin-cell-person text-center align-middle">${escape(name)}</td>
+          <td class="admin-cell-category text-center align-middle" title="${escape(category)}"><span class="cms-pill">${escape(catDisplay)}</span></td>
+          <td class="admin-cell-year text-center align-middle">${escape(year)}</td>
+          <td class="admin-cell-institution text-center align-middle">${escape(institution)}</td>
+          <td class="admin-cell-status text-center align-middle"><span class="cms-pill ${statusClass}">${escape(status)}</span></td>
+          <td class="admin-cell-actions text-center align-middle">
+            <div class="admin-table-actions justify-center">
+              <button class="btn btn-outline btn-sm whitespace-nowrap shrink-0" data-detail-prestasi="${id}">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2.75 10s2.75-4.75 7.25-4.75S17.25 10 17.25 10 14.5 14.75 10 14.75 2.75 10 2.75 10Z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.25" stroke="currentColor" stroke-width="1.5"/></svg>
+                Detail
+              </button>
               ${approveButton}
-              <a href="${adminUrl('prestasi-edit')}?id=${id}" class="cms-action edit">Edit</a>
-              <button class="cms-action delete" data-delete data-prestasi-id="${id}">Delete</button>
+              <a href="${adminUrl('prestasi-edit')}?id=${id}" class="btn btn-secondary btn-sm whitespace-nowrap shrink-0">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M13.25 3.75a2.1 2.1 0 1 1 2.97 2.97L7 16.94 3 17l.06-4 10.19-10.25Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m12 5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Edit
+              </a>
+              <button class="btn btn-danger btn-sm whitespace-nowrap shrink-0" data-delete-prestasi="${id}">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.5 5.5h11M8 5.5V4.25A1.25 1.25 0 0 1 9.25 3h1.5A1.25 1.25 0 0 1 12 4.25V5.5m-5.5 0 .5 10A1.25 1.25 0 0 0 8.25 16.75h3.5A1.25 1.25 0 0 0 13 15.5l.5-10M8.5 8.25v5M11.5 8.25v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Delete
+              </button>
             </div>
           </td>
         </tr>
@@ -3163,6 +3167,7 @@
           if (res.ok) {
             Admin.showToast('Prestasi berhasil dihapus.');
             button.closest('tr')?.remove();
+            renumberPrestasiRows();
           } else {
             const json = await res.json().catch(() => ({}));
             Admin.showToast(json.error || 'Gagal menghapus prestasi.');
@@ -3172,6 +3177,185 @@
         }
       });
     });
+  }
+
+  function renumberPrestasiRows() {
+    const tbody = document.querySelector('#admin-prestasi-list');
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll('tr:not([data-empty-row])');
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr data-empty-row="1"><td colspan="8" class="text-center text-sm text-neutral-500 py-8">Belum ada data prestasi.</td></tr>';
+      return;
+    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const page = Math.max(1, parseInt(urlParams.get('page') || '1', 10));
+    const perPage = Math.max(1, parseInt(urlParams.get('per_page') || '25', 10));
+    const startNum = (page - 1) * perPage + 1;
+    let count = 0;
+    rows.forEach((r) => {
+      const numCell = r.querySelector('.admin-cell-index, td:first-child');
+      if (numCell && !r.querySelector('td[colspan]')) {
+        numCell.textContent = String(startNum + count);
+        count++;
+      }
+    });
+  }
+
+  function bindPrestasiFilter() {
+    const form = document.querySelector('#prestasi-filter-form');
+    if (!form) return;
+
+    const searchInput = form.querySelector('#prestasi-search');
+    const clearBtn = form.querySelector('#prestasi-search-clear');
+    const statusSelect = form.querySelector('#prestasi-status-select');
+    const categorySelect = form.querySelector('#prestasi-category-select');
+    const perPageSelect = form.querySelector('#prestasi-per-page-select');
+
+    let debounceTimer = null;
+    let abortCtrl = null;
+
+    const updateClearBtn = () => {
+      if (clearBtn && searchInput) {
+        clearBtn.style.display = searchInput.value.trim() ? '' : 'none';
+      }
+    };
+
+    const runFilter = async () => {
+      const q = searchInput ? searchInput.value.trim() : '';
+      const status = statusSelect ? statusSelect.value : '';
+      const category = categorySelect ? categorySelect.value : '';
+      const perPage = perPageSelect ? perPageSelect.value : '';
+
+      updateClearBtn();
+
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (status) params.set('status', status);
+      if (category) params.set('category', category);
+      if (perPage && perPage !== '25') params.set('per_page', perPage);
+
+      const targetUrl = '/admin/prestasi' + (params.toString() ? '?' + params.toString() : '');
+      window.history.replaceState(null, '', targetUrl);
+
+      if (abortCtrl) {
+        try { abortCtrl.abort(); } catch (_) {}
+      }
+      abortCtrl = new AbortController();
+
+      const listEl = document.querySelector('#admin-prestasi-list[data-ssr="true"]');
+      if (listEl) {
+        listEl.style.opacity = '0.55';
+        listEl.style.transition = 'opacity 150ms ease';
+      }
+
+      try {
+        const res = await fetch(targetUrl, {
+          signal: abortCtrl.signal,
+          credentials: 'same-origin',
+        });
+        if (!res.ok) throw new Error('Fetch failed');
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+        const newList = doc.querySelector('#admin-prestasi-list[data-ssr="true"]');
+        const currentList = document.querySelector('#admin-prestasi-list[data-ssr="true"]');
+        if (newList && currentList) {
+          currentList.innerHTML = newList.innerHTML;
+        }
+
+        const newSummary = doc.querySelector('.news-filter-summary');
+        const currentSummary = document.querySelector('.news-filter-summary');
+        if (newSummary && currentSummary) {
+          currentSummary.innerHTML = newSummary.innerHTML;
+        }
+
+        const newPagination = doc.querySelector('.admin-pagination[data-ssr="true"]');
+        const currentPagination = document.querySelector('.admin-pagination[data-ssr="true"]');
+        if (currentPagination) {
+          if (newPagination) {
+            currentPagination.outerHTML = newPagination.outerHTML;
+          } else {
+            currentPagination.remove();
+          }
+        } else if (newPagination) {
+          const parent = currentList?.closest('.admin-card') || currentList?.parentElement;
+          if (parent) {
+            parent.insertAdjacentHTML('beforeend', newPagination.outerHTML);
+          }
+        }
+
+        const newReset = doc.querySelector('.news-filter-reset-link');
+        const currentReset = document.querySelector('.news-filter-reset-link');
+        if (newReset && !currentReset) {
+          document.querySelector('.news-filter-footer-left')?.appendChild(newReset);
+        } else if (!newReset && currentReset) {
+          currentReset.remove();
+        }
+
+        bindPrestasiDeleteButtons();
+        bindPrestasiApproveButtons();
+        bindPrestasiDetailButtons();
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          form.submit();
+        }
+      } finally {
+        if (listEl) {
+          listEl.style.opacity = '1';
+        }
+      }
+    };
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        updateClearBtn();
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          runFilter();
+        }, 350);
+      });
+
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          clearTimeout(debounceTimer);
+          runFilter();
+        }
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+        }
+        clearTimeout(debounceTimer);
+        runFilter();
+      });
+    }
+
+    if (statusSelect) {
+      statusSelect.addEventListener('change', () => {
+        clearTimeout(debounceTimer);
+        runFilter();
+      });
+    }
+
+    if (categorySelect) {
+      categorySelect.addEventListener('change', () => {
+        clearTimeout(debounceTimer);
+        runFilter();
+      });
+    }
+
+    if (perPageSelect) {
+      perPageSelect.addEventListener('change', () => {
+        clearTimeout(debounceTimer);
+        runFilter();
+      });
+    }
   }
 
   async function loadPrestasiMemberOptions(currentName = '') {
@@ -3390,6 +3574,148 @@
     return `${cleanContent}${cleanContent ? '\n\n' : ''}Dokumentasi: ${urls.join(', ')}`;
   }
 
+
+  function limitTwoWords(str) {
+    const words = String(str || '').trim().split(/\s+/).filter(Boolean);
+    return words.slice(0, 2).join(' ');
+  }
+
+  function initPrestasiCategoryDropdown() {
+    const picker = document.querySelector('#prestasi-category-picker');
+    if (!picker || picker.dataset.pickerReady === '1') return;
+    picker.dataset.pickerReady = '1';
+
+    const input = picker.querySelector('#prestasi-category');
+    const toggleBtn = picker.querySelector('#prestasi-category-toggle');
+    const menu = picker.querySelector('#prestasi-category-menu');
+    const searchInput = picker.querySelector('#prestasi-category-search');
+    const list = picker.querySelector('#prestasi-category-list');
+    const customWrap = picker.querySelector('#prestasi-custom-category-wrap');
+    const customInput = picker.querySelector('#prestasi-custom-category');
+    const customHint = picker.querySelector('#prestasi-custom-category-hint');
+    if (!input || !menu || !list) return;
+
+    const openMenu = () => {
+      menu.classList.remove('hidden');
+      toggleBtn?.setAttribute('aria-expanded', 'true');
+      if (searchInput) {
+        searchInput.value = '';
+        filterOptions('');
+        setTimeout(() => searchInput.focus(), 50);
+      }
+    };
+
+    const closeMenu = () => {
+      menu.classList.add('hidden');
+      toggleBtn?.setAttribute('aria-expanded', 'false');
+    };
+
+    const toggleMenu = () => {
+      if (menu.classList.contains('hidden')) {
+        openMenu();
+      } else {
+        closeMenu();
+      }
+    };
+
+    const filterOptions = (query) => {
+      const q = query.trim().toLowerCase();
+      const items = list.querySelectorAll('.prestasi-picker-item');
+      items.forEach((item) => {
+        const val = (item.dataset.value || '').toLowerCase();
+        const matches = !q || val.includes(q);
+        item.style.display = matches ? '' : 'none';
+      });
+    };
+
+    const selectValue = (val) => {
+      input.value = val;
+      list.querySelectorAll('.prestasi-picker-item').forEach((item) => {
+        const isMatch = item.dataset.value === val;
+        item.classList.toggle('is-selected', isMatch);
+        let check = item.querySelector('svg');
+        if (isMatch) {
+          if (!check) {
+            item.insertAdjacentHTML('beforeend', '<svg class="h-4 w-4 text-blue-600 ml-auto" viewBox="0 0 20 20" fill="none" stroke="currentColor"><path d="M16.7 5.3l-8.5 8.5-4.2-4.2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+          }
+        } else if (check) {
+          check.remove();
+        }
+      });
+
+      if (val === 'Custom') {
+        customWrap?.classList.remove('hidden');
+        customInput?.focus();
+      } else {
+        customWrap?.classList.add('hidden');
+        if (customInput) customInput.value = '';
+      }
+
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      closeMenu();
+    };
+
+    if (customInput) {
+      customInput.addEventListener('input', () => {
+        const words = customInput.value.trim().split(/\s+/).filter(Boolean);
+        if (words.length > 2) {
+          customInput.value = words.slice(0, 2).join(' ');
+          if (customHint) {
+            customHint.textContent = 'Maksimal 2 kata telah tercapai.';
+            customHint.classList.add('text-amber-600');
+          }
+        } else if (customHint) {
+          customHint.textContent = 'Kategori kustom maksimal 2 kata.';
+          customHint.classList.remove('text-amber-600');
+        }
+      });
+    }
+
+    toggleBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMenu();
+    });
+
+    input.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openMenu();
+    });
+
+    searchInput?.addEventListener('input', () => {
+      filterOptions(searchInput.value);
+    });
+
+    searchInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const visibleItems = Array.from(list.querySelectorAll('.prestasi-picker-item')).filter(el => el.style.display !== 'none');
+        if (visibleItems.length > 0) {
+          selectValue(visibleItems[0].dataset.value);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeMenu();
+        input.focus();
+      }
+    });
+
+    list.addEventListener('click', (e) => {
+      const item = e.target.closest('.prestasi-picker-item');
+      if (item) {
+        e.preventDefault();
+        selectValue(item.dataset.value);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!picker.contains(e.target)) {
+        closeMenu();
+      }
+    });
+  }
+
   async function renderPrestasiEditor(isEdit) {
     const id = Number(new URLSearchParams(location.search).get('id')) || 0;
 
@@ -3415,6 +3741,7 @@
       });
       bindPrestasiImageUpload();
       bindPrestasiSeoAutofill();
+      initPrestasiCategoryDropdown();
 
       // Enhance custom selects
       enhanceAdminSelects(document.querySelector('#cms-body') || document);
@@ -3531,6 +3858,7 @@
     `;
 
     enhanceAdminSelects(body);
+    initPrestasiCategoryDropdown();
     bindPrestasiImageUpload();
     bindPrestasiSeoAutofill();
 
@@ -3575,7 +3903,14 @@
       const payload = {
         name: document.querySelector('#prestasi-member-search')?.value?.trim() || '',
         title: buildPrestasiTitle(),
-        category: document.querySelector('#prestasi-category')?.value || '',
+        category: (() => {
+          const catVal = document.querySelector('#prestasi-category')?.value?.trim() || '';
+          const customVal = document.querySelector('#prestasi-custom-category')?.value?.trim() || '';
+          if (catVal === 'Custom') {
+            return limitTwoWords(customVal || 'Prestasi');
+          }
+          return catVal || 'Prestasi';
+        })(),
         year: document.querySelector('#prestasi-year')?.value || '',
         description: descField?.value?.trim() || '',
         content: appendPrestasiGalleryToContent(contentHtml),
@@ -3639,32 +3974,76 @@
             Admin.showToast('Data prestasi tidak ditemukan.');
             return;
           }
-          const statusClass = (item.status || 'draft') === 'published' ? 'cms-pill-green' : (item.status || 'draft') === 'draft' ? 'cms-pill-yellow' : '';
-          await Admin.showConfirm({
-            title: 'Detail Prestasi',
-            message: `<div class="text-left mt-3">
-              ${item.image ? `<img src="${escape(item.image)}" class="w-full max-h-48 object-cover rounded-xl mb-4" alt="${escape(item.title || '')}" />` : ''}
-              <h3 class="text-lg font-bold text-neutral-950">${escape(item.title || '')}</h3>
-              <div class="mt-3 grid gap-2 text-sm">
-                <div><strong>Nama:</strong> ${escape(item.name || '')}</div>
-                <div><strong>Kategori:</strong> ${escape(item.category || '')}</div>
-                <div><strong>Tahun:</strong> ${escape(item.year || '')}</div>
-                <div><strong>Penyelenggara:</strong> ${escape(item.institution || '')}</div>
-                <div><strong>Komisariat:</strong> ${escape(item.campus || '')}</div>
-                <div><strong>Status:</strong> <span class="cms-pill ${statusClass}">${escape(item.status || 'draft')}</span></div>
+
+          const status = item.status || 'draft';
+          const statusClass = status === 'published' ? 'cms-pill-green' : (status === 'draft' ? 'cms-pill-yellow' : '');
+          const imageSrc = item.image || item.photo || '';
+
+          const modalHtml = `
+            <div class="prestasi-detail-modal-body">
+              ${imageSrc ? `
+                <div class="prestasi-detail-cover-wrap mb-4">
+                  <img src="${escape(imageSrc)}" class="prestasi-detail-cover" alt="${escape(item.title || '')}" />
+                </div>
+              ` : ''}
+
+              <div class="prestasi-detail-header mb-4">
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  ${item.category ? `<span class="cms-pill">${escape(item.category)}</span>` : ''}
+                  ${item.year ? `<span class="cms-pill bg-neutral-100 text-neutral-700">${escape(item.year)}</span>` : ''}
+                  <span class="cms-pill ${statusClass}">${escape(status.toUpperCase())}</span>
+                </div>
+                <h3 class="prestasi-detail-title text-xl font-bold text-neutral-900">${escape(item.title || 'Tanpa Judul')}</h3>
               </div>
-              ${item.description ? `<div class="mt-4 text-sm text-neutral-600">${escape(item.description)}</div>` : ''}
-              ${item.content && item.content !== item.description ? `<div class="prose-soft mt-4 border-t border-neutral-900/10 pt-4">${item.content}</div>` : ''}
-            </div>`,
-            confirmText: 'Edit',
+
+              <div class="prestasi-detail-info-grid mb-4">
+                <div class="prestasi-info-card">
+                  <div class="prestasi-info-label">Nama Anggota</div>
+                  <div class="prestasi-info-value font-semibold text-neutral-900">${escape(item.name || item.member_name || '-')}</div>
+                </div>
+                <div class="prestasi-info-card">
+                  <div class="prestasi-info-label">Komisariat / Kampus</div>
+                  <div class="prestasi-info-value text-neutral-700">${escape(item.campus || '-')}</div>
+                </div>
+                <div class="prestasi-info-card">
+                  <div class="prestasi-info-label">Kategori Lomba</div>
+                  <div class="prestasi-info-value text-neutral-700">${escape(item.category || '-')}</div>
+                </div>
+                <div class="prestasi-info-card">
+                  <div class="prestasi-info-label">Penyelenggara</div>
+                  <div class="prestasi-info-value text-neutral-700">${escape(item.institution || '-')}</div>
+                </div>
+              </div>
+
+              ${item.description ? `
+                <div class="prestasi-detail-section mb-4">
+                  <h4 class="prestasi-section-heading text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1.5">Deskripsi Singkat</h4>
+                  <p class="prestasi-detail-text text-sm leading-relaxed text-neutral-700 bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/60">${escape(item.description)}</p>
+                </div>
+              ` : ''}
+
+              ${item.content && item.content !== item.description ? `
+                <div class="prestasi-detail-section">
+                  <h4 class="prestasi-section-heading text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1.5">Detail Lengkap</h4>
+                  <div class="prestasi-detail-content prose-soft max-w-none text-sm text-neutral-700 leading-relaxed bg-white p-3.5 rounded-xl border border-neutral-200/60">${item.content}</div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+
+          const edit = await Admin.showConfirm({
+            title: 'Detail Prestasi',
+            message: modalHtml,
+            confirmText: 'Edit Prestasi',
             cancelText: 'Tutup',
+            icon: false,
             html: true,
-            panelClass: 'is-wide'
-          }).then((edit) => {
-            if (edit) {
-              window.location.href = `${adminUrl('prestasi-edit')}?id=${item.id || item.prestasi_id}`;
-            }
+            panelClass: 'is-wide prestasi-detail-dialog'
           });
+
+          if (edit) {
+            window.location.href = `${adminUrl('prestasi-edit')}?id=${item.id || item.prestasi_id}`;
+          }
         } catch (e) {
           Admin.showToast('Gagal memuat detail prestasi.');
         }

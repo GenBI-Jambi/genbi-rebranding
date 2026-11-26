@@ -3855,24 +3855,32 @@ html[data-theme^="dark-"] .category-banner-box.is-fallback .category-banner-fall
   position: fixed;
   inset: 0;
   z-index: 3000;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: rgb(15 23 42 / 0.55);
   padding: 1rem;
   backdrop-filter: blur(10px);
+  overflow: hidden;
 }
 
 .admin-confirm.hidden { display: none; }
 
 .admin-confirm-panel {
-  width: min(100%, 440px);
-  border-radius: 1.6rem;
+  width: min(100%, 460px);
+  max-height: min(90vh, 760px);
+  max-height: min(90dvh, 760px);
+  border-radius: 1.5rem;
   background: rgb(var(--surface-raised, 255 252 246));
-  padding: 1.5rem;
   box-shadow: 0 28px 90px rgb(0 0 0 / 0.25);
   opacity: 0;
   transform: translateY(12px) scale(0.98);
-  transition: 160ms ease;
+  transition: opacity 160ms ease, transform 160ms ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  padding: 0;
 }
 
 .admin-confirm-panel.is-wide {
@@ -3884,15 +3892,105 @@ html[data-theme^="dark-"] .category-banner-box.is-fallback .category-banner-fall
   transform: translateY(0) scale(1);
 }
 
+.admin-confirm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: inherit;
+  flex-shrink: 0;
+}
+
+.admin-confirm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.admin-confirm-icon-wrap {
+  flex-shrink: 0;
+}
+
 .admin-confirm-icon {
   display: grid;
-  width: 3rem;
-  height: 3rem;
-  margin-bottom: 1rem;
+  width: 2.75rem;
+  height: 2.75rem;
   place-items: center;
-  border-radius: 1rem;
+  border-radius: 0.875rem;
   background: var(--blue-50);
   color: var(--blue-800);
+  margin: 0;
+}
+
+.admin-confirm-panel.is-danger .admin-confirm-icon {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.admin-confirm-header #confirm-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: rgb(var(--text-primary));
+}
+
+.admin-confirm-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.04);
+  color: #64748b;
+  cursor: pointer;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.admin-confirm-close-btn:hover {
+  background: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+}
+
+.admin-confirm-message {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.2) transparent;
+}
+
+.admin-confirm-message::-webkit-scrollbar {
+  width: 6px;
+}
+.admin-confirm-message::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.2);
+  border-radius: 999px;
+}
+
+.admin-confirm-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.02);
+  flex-shrink: 0;
+}
+
+.admin-confirm-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
 @media (max-width: 1023px) {
@@ -10019,4 +10117,379 @@ html[data-theme^="dark-"] .news-filter-footer {
 
 html[data-theme^="dark-"] .news-filter-summary {
   color: #94a3b8;
+}
+
+
+/* ==========================================================================
+   ADMIN PRESTASI - COLUMN STYLING, FILTER, MODAL & SEARCHABLE PICKER
+   ========================================================================== */
+
+/* Specific column styling for admin prestasi table */
+.admin-data-table-prestasi {
+  min-width: 1040px;
+}
+.admin-data-table-prestasi .admin-col-index { width: 3.25rem; }
+.admin-data-table-prestasi .admin-col-title { width: 17rem; }
+.admin-data-table-prestasi .admin-col-person { width: 11rem; }
+.admin-data-table-prestasi .admin-col-category { width: 8.5rem; }
+.admin-data-table-prestasi .admin-col-year { width: 4.5rem; }
+.admin-data-table-prestasi .admin-col-institution { width: 10rem; }
+.admin-data-table-prestasi .admin-col-status { width: 6.5rem; }
+.admin-data-table-prestasi .admin-col-actions { width: 13.5rem; }
+
+.admin-data-table-prestasi .admin-cell-category {
+  white-space: nowrap;
+}
+
+/* Prestasi Category Searchable Dropdown Picker */
+.prestasi-category-picker {
+  position: relative;
+  width: 100%;
+}
+.prestasi-picker-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 150ms ease;
+}
+.prestasi-picker-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  padding: 0.375rem;
+}
+.prestasi-picker-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  margin-bottom: 0.375rem;
+}
+.prestasi-picker-search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 0.8125rem;
+  color: #0f172a;
+  outline: none;
+  font-family: inherit;
+}
+.prestasi-picker-search-input::placeholder {
+  color: #94a3b8;
+}
+.prestasi-picker-list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+.prestasi-picker-list::-webkit-scrollbar {
+  width: 5px;
+}
+.prestasi-picker-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.prestasi-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #1e293b;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.prestasi-picker-item:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+.prestasi-picker-item.is-selected {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+.prestasi-picker-item.is-custom {
+  color: #0284c7;
+  border-top: 1px dashed rgba(15, 23, 42, 0.1);
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+}
+
+/* Prestasi Detail Modal Styling */
+.prestasi-detail-dialog {
+  width: min(100%, 680px) !important;
+  max-width: 680px !important;
+  max-height: min(92vh, 820px) !important;
+  max-height: min(92dvh, 820px) !important;
+}
+
+.prestasi-detail-dialog .admin-confirm-icon-wrap {
+  display: none !important;
+}
+
+.prestasi-detail-modal-body {
+  text-align: left;
+  padding-right: 0.25rem;
+}
+.prestasi-detail-cover-wrap {
+  width: 100%;
+  max-height: 240px;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #f8fafc;
+}
+.prestasi-detail-cover {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
+}
+.prestasi-detail-title {
+  font-family: 'Source Serif 4', Georgia, serif;
+  line-height: 1.3;
+}
+.prestasi-detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+@media (max-width: 639px) {
+  .prestasi-detail-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.prestasi-info-card {
+  padding: 0.625rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 0.625rem;
+}
+.prestasi-info-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.125rem;
+}
+.prestasi-info-value {
+  font-size: 0.84rem;
+  word-break: break-word;
+}
+
+/* Mobile responsive rules for admin-confirm & prestasi detail */
+@media (max-width: 640px) {
+  .admin-confirm {
+    padding: 0.5rem;
+    align-items: flex-end;
+  }
+  .admin-confirm-panel {
+    width: 100% !important;
+    max-height: calc(100dvh - 1rem) !important;
+    border-radius: 1.25rem 1.25rem 0.75rem 0.75rem !important;
+  }
+  .admin-confirm-header {
+    padding: 0.9rem 1.1rem;
+  }
+  .admin-confirm-header #confirm-title {
+    font-size: 1.15rem;
+  }
+  .admin-confirm-message {
+    padding: 1rem 1.1rem;
+  }
+  .admin-confirm-footer {
+    padding: 0.85rem 1.1rem;
+  }
+  .admin-confirm-footer-actions {
+    width: 100%;
+    margin-left: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .admin-confirm-footer-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  .prestasi-detail-cover-wrap,
+  .prestasi-detail-cover {
+    height: 160px !important;
+    max-height: 160px !important;
+  }
+  .prestasi-detail-info-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Dark Theme overrides for Prestasi */
+html[data-theme^="dark-"] .prestasi-picker-menu {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+}
+html[data-theme^="dark-"] .prestasi-picker-search-wrap {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+html[data-theme^="dark-"] .prestasi-picker-search-input {
+  color: #f8fafc;
+}
+html[data-theme^="dark-"] .prestasi-picker-item {
+  color: #e2e8f0;
+}
+html[data-theme^="dark-"] .prestasi-picker-item:hover {
+  background-color: #334155;
+  color: #ffffff;
+}
+html[data-theme^="dark-"] .prestasi-picker-item.is-selected {
+  background-color: rgba(30, 58, 138, 0.4);
+  color: #93c5fd;
+}
+
+html[data-theme^="dark-"] .prestasi-detail-cover-wrap {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+html[data-theme^="dark-"] .prestasi-info-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html[data-theme^="dark-"] .prestasi-info-label {
+  color: #94a3b8;
+}
+html[data-theme^="dark-"] .prestasi-info-value {
+  color: #f1f5f9;
+}
+html[data-theme^="dark-"] .prestasi-detail-title {
+  color: #f8fafc;
+}
+
+/* Prestasi Form Width Improvements */
+.prestasi-editor-form {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+.prestasi-config-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+}
+.prestasi-config-panel .config-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 1.75rem 2rem !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+}
+.prestasi-config-panel .config-input {
+  width: 100% !important;
+  font-size: 0.9375rem !important;
+}
+
+/* Prestasi Table Column Alignment & Sizing */
+.admin-data-table-prestasi {
+  min-width: 1200px !important;
+}
+
+.admin-data-table-prestasi .admin-col-index { width: 3.5rem !important; }
+.admin-data-table-prestasi .admin-col-title { width: 17rem !important; }
+.admin-data-table-prestasi .admin-col-person { width: 12rem !important; }
+.admin-data-table-prestasi .admin-col-category { width: 10rem !important; }
+.admin-data-table-prestasi .admin-col-year { width: 5rem !important; }
+.admin-data-table-prestasi .admin-col-institution { width: 11rem !important; }
+.admin-data-table-prestasi .admin-col-status { width: 8rem !important; }
+.admin-data-table-prestasi .admin-col-actions { width: 17.5rem !important; min-width: 17.5rem !important; }
+
+/* Middle-Center Alignment for Prestasi Table Columns:
+   1: No, 3: Nama Anggota, 4: Kategori, 5: Tahun, 6: Penyelenggara, 7: Status, 8: Action */
+.admin-data-table-prestasi th,
+.admin-data-table-prestasi td {
+  vertical-align: middle !important;
+}
+
+.admin-data-table-prestasi th:nth-child(1),
+.admin-data-table-prestasi td:nth-child(1),
+.admin-data-table-prestasi th:nth-child(3),
+.admin-data-table-prestasi td:nth-child(3),
+.admin-data-table-prestasi th:nth-child(4),
+.admin-data-table-prestasi td:nth-child(4),
+.admin-data-table-prestasi th:nth-child(5),
+.admin-data-table-prestasi td:nth-child(5),
+.admin-data-table-prestasi th:nth-child(6),
+.admin-data-table-prestasi td:nth-child(6),
+.admin-data-table-prestasi th:nth-child(7),
+.admin-data-table-prestasi td:nth-child(7),
+.admin-data-table-prestasi th:nth-child(8),
+.admin-data-table-prestasi td:nth-child(8),
+.admin-data-table-prestasi .admin-col-index,
+.admin-data-table-prestasi .admin-cell-index,
+.admin-data-table-prestasi .admin-col-person,
+.admin-data-table-prestasi .admin-cell-person,
+.admin-data-table-prestasi .admin-col-category,
+.admin-data-table-prestasi .admin-cell-category,
+.admin-data-table-prestasi .admin-col-year,
+.admin-data-table-prestasi .admin-cell-year,
+.admin-data-table-prestasi .admin-col-institution,
+.admin-data-table-prestasi .admin-cell-institution,
+.admin-data-table-prestasi .admin-col-status,
+.admin-data-table-prestasi .admin-cell-status,
+.admin-data-table-prestasi .admin-col-actions,
+.admin-data-table-prestasi .admin-cell-actions {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.admin-data-table-prestasi th:nth-child(2),
+.admin-data-table-prestasi td:nth-child(2),
+.admin-data-table-prestasi .admin-col-title,
+.admin-data-table-prestasi .admin-cell-title {
+  text-align: left !important;
+  vertical-align: middle !important;
+}
+
+.admin-data-table-prestasi .admin-cell-actions .admin-table-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: nowrap !important;
+  gap: 0.4rem !important;
+}
+
+.admin-data-table-prestasi .admin-cell-actions .btn {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.admin-data-table-prestasi .admin-cell-category .cms-pill,
+.admin-data-table-prestasi .admin-cell-status .cms-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+}
+
+.admin-data-table-prestasi .admin-cell-title {
+  vertical-align: middle !important;
 }

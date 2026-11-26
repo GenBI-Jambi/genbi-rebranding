@@ -200,8 +200,13 @@ class Prestasi
     private function applyAdminFilters(string $sql, array &$params, array $filters): string
     {
         if (!empty($filters['q'])) {
-            $sql .= ' AND (title LIKE :q OR member_name LIKE :q OR category LIKE :q OR institution LIKE :q OR description LIKE :q)';
-            $params[':q'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $sql .= ' AND (title LIKE :q1 OR member_name LIKE :q2 OR category LIKE :q3 OR institution LIKE :q4 OR description LIKE :q5)';
+            $searchTerm = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $params[':q1'] = $searchTerm;
+            $params[':q2'] = $searchTerm;
+            $params[':q3'] = $searchTerm;
+            $params[':q4'] = $searchTerm;
+            $params[':q5'] = $searchTerm;
         }
         if (!empty($filters['category'])) {
             $sql .= ' AND category = :category';
@@ -216,6 +221,31 @@ class Prestasi
             $params[':status'] = $filters['status'];
         }
         return $sql;
+    }
+
+    /** @return string[] */
+    public function allCategories(): array
+    {
+        $defaults = [
+            'Lomba Bank Indonesia',
+            'Karya Tulis Ilmiah',
+            'Belmawa',
+            'Satria Data',
+            'ONMIPA',
+            'Pimnas',
+            'PKM',
+        ];
+        if (!$this->db) {
+            return $defaults;
+        }
+
+        try {
+            $stmt = $this->db->query("SELECT DISTINCT category FROM tbl_prestasi WHERE category IS NOT NULL AND category != '' AND deleted_at IS NULL ORDER BY category ASC");
+            $dbCategories = $stmt ? $stmt->fetchAll(\PDO::FETCH_COLUMN) : [];
+            return array_values(array_unique(array_filter(array_merge($defaults, $dbCategories))));
+        } catch (\Throwable $e) {
+            return $defaults;
+        }
     }
 
     public function create(array $data): int

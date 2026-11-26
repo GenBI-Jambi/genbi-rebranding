@@ -232,6 +232,7 @@ HTML;
 <script defer src="/assets/js/admin/cms.js"></script>
 HTML;
         $cmsScript = '<script defer src="/assets/js/admin/cms.js"></script>';
+        $prestasiCategories = $this->prestasiModel->allCategories();
 
         if ($page === 'prestasi') {
             $pg = Paginator::resolve([
@@ -259,6 +260,7 @@ HTML;
                 'total' => $total,
                 'totalPages' => $totalPages,
                 'filters' => $filters,
+                'prestasiCategories' => $prestasiCategories,
                 'scripts' => $cmsScript,
             ]);
         }
@@ -267,10 +269,11 @@ HTML;
             return $this->viewRenderer->renderWithLayout('admin/prestasi/form.php', 'layouts/admin.php', [
                 'title' => 'Add Prestasi | Admin GenBI',
                 'csrfToken' => CsrfService::token(),
-                'cmsPage' => 'prestasi',
+                'cmsPage' => 'prestasi-add',
                 'cmsMode' => 'editor',
                 'isEdit' => false,
                 'item' => null,
+                'prestasiCategories' => $prestasiCategories,
                 'scripts' => $editorScripts,
             ]);
         }
@@ -285,6 +288,7 @@ HTML;
                 'cmsMode' => 'editor',
                 'isEdit' => true,
                 'item' => $item,
+                'prestasiCategories' => $prestasiCategories,
                 'scripts' => $editorScripts,
             ]);
         }
