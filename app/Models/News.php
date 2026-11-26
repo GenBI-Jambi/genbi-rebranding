@@ -174,32 +174,33 @@ final class News
 
         // Search filter
         if (!empty($filters['q'])) {
-            $sql .= ' AND (n.news_title LIKE :q OR n.news_content_short LIKE :q OR n.news_content LIKE :q OR c.category_name LIKE :q)';
-            $params['q'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $sql .= ' AND (n.news_title LIKE :q1 OR n.news_content_short LIKE :q2 OR n.news_content LIKE :q3 OR c.category_name LIKE :q4)';
+            $searchTerm = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $params['q1'] = $searchTerm;
+            $params['q2'] = $searchTerm;
+            $params['q3'] = $searchTerm;
+            $params['q4'] = $searchTerm;
         }
 
         // Category filter (array of category IDs)
         if (!empty($filters['categories']) && is_array($filters['categories'])) {
-            $categoryIds = array_filter(array_map('intval', $filters['categories']));
+            $categoryIds = array_values(array_filter(array_map('intval', $filters['categories'])));
             if (!empty($categoryIds)) {
-                $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
-                $sql .= " AND n.category_id IN ($placeholders)";
-                foreach ($categoryIds as $catId) {
-                    $params[] = $catId;
+                $catPlaceholders = [];
+                foreach ($categoryIds as $i => $catId) {
+                    $paramName = 'cat_' . $i;
+                    $catPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = $catId;
                 }
+                $sql .= ' AND n.category_id IN (' . implode(',', $catPlaceholders) . ')';
             }
         }
 
         $sql .= ' ORDER BY n.news_id DESC LIMIT :limit OFFSET :offset';
         $statement = $this->db->prepare($sql);
         
-        $paramIndex = 1;
         foreach ($params as $key => $value) {
-            if (is_string($key)) {
-                $statement->bindValue(':' . $key, $value);
-            } else {
-                $statement->bindValue($paramIndex++, $value, PDO::PARAM_INT);
-            }
+            $statement->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
         }
         $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
         $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -224,31 +225,32 @@ final class News
 
         // Search filter
         if (!empty($filters['q'])) {
-            $sql .= ' AND (n.news_title LIKE :q OR n.news_content_short LIKE :q OR n.news_content LIKE :q OR c.category_name LIKE :q)';
-            $params['q'] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $sql .= ' AND (n.news_title LIKE :q1 OR n.news_content_short LIKE :q2 OR n.news_content LIKE :q3 OR c.category_name LIKE :q4)';
+            $searchTerm = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $params['q1'] = $searchTerm;
+            $params['q2'] = $searchTerm;
+            $params['q3'] = $searchTerm;
+            $params['q4'] = $searchTerm;
         }
 
         // Category filter (array of category IDs)
         if (!empty($filters['categories']) && is_array($filters['categories'])) {
-            $categoryIds = array_filter(array_map('intval', $filters['categories']));
+            $categoryIds = array_values(array_filter(array_map('intval', $filters['categories'])));
             if (!empty($categoryIds)) {
-                $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
-                $sql .= " AND n.category_id IN ($placeholders)";
-                foreach ($categoryIds as $catId) {
-                    $params[] = $catId;
+                $catPlaceholders = [];
+                foreach ($categoryIds as $i => $catId) {
+                    $paramName = 'cat_' . $i;
+                    $catPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = $catId;
                 }
+                $sql .= ' AND n.category_id IN (' . implode(',', $catPlaceholders) . ')';
             }
         }
 
         $statement = $this->db->prepare($sql);
         
-        $paramIndex = 1;
         foreach ($params as $key => $value) {
-            if (is_string($key)) {
-                $statement->bindValue(':' . $key, $value);
-            } else {
-                $statement->bindValue($paramIndex++, $value, PDO::PARAM_INT);
-            }
+            $statement->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
         }
         $statement->execute();
         return (int) $statement->fetchColumn();

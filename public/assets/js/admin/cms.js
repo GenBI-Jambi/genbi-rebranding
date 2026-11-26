@@ -389,11 +389,11 @@
   }
 
   async function renderNewsList() {
-    // Check if SSR markup exists - if so, only bind delete behavior and multi-select
+    // Check if SSR markup exists - if so, only bind delete behavior and filter
     if (document.querySelector('#admin-news-list[data-ssr="true"]')) {
       enhanceAdminSelects(document.querySelector('#admin-content') || document);
       bindNewsDeleteButtons();
-      bindAdminMultiSelect();
+      bindNewsFilter();
       return;
     }
 
@@ -467,6 +467,169 @@
         </td>
       </tr>
     `).join('');
+  }
+
+  function bindNewsFilter() {
+    const form = document.querySelector('#news-filter-form');
+    if (!form) return;
+
+    const searchInput = form.querySelector('#news-search');
+    const clearBtn = form.querySelector('#news-search-clear');
+    const statusSelect = form.querySelector('#news-status-select');
+    const categorySelect = form.querySelector('#news-category-select');
+    const perPageSelect = form.querySelector('#news-per-page-select');
+
+    let debounceTimer = null;
+    let abortCtrl = null;
+
+    const updateClearBtn = () => {
+      if (clearBtn && searchInput) {
+        clearBtn.style.display = searchInput.value.trim() ? '' : 'none';
+      }
+    };
+
+    const runFilter = async () => {
+      const q = searchInput ? searchInput.value.trim() : '';
+      const status = statusSelect ? statusSelect.value : '';
+      const category = categorySelect ? categorySelect.value : '';
+      const perPage = perPageSelect ? perPageSelect.value : '';
+      const layoutInput = form.querySelector('input[name="layout"]');
+      const layout = layoutInput ? layoutInput.value : 'list';
+
+      updateClearBtn();
+
+      const params = new URLSearchParams();
+      if (layout) params.set('layout', layout);
+      if (q) params.set('q', q);
+      if (status) params.set('status', status);
+      if (category) params.set('category', category);
+      if (perPage && perPage !== '25') params.set('per_page', perPage);
+
+      const targetUrl = '/admin/news' + (params.toString() ? '?' + params.toString() : '');
+      window.history.replaceState(null, '', targetUrl);
+
+      if (abortCtrl) {
+        try { abortCtrl.abort(); } catch (_) {}
+      }
+      abortCtrl = new AbortController();
+
+      const listEl = document.querySelector('#admin-news-list[data-ssr="true"]');
+      if (listEl) {
+        listEl.style.opacity = '0.55';
+        listEl.style.transition = 'opacity 150ms ease';
+      }
+
+      try {
+        const res = await fetch(targetUrl, {
+          signal: abortCtrl.signal,
+          credentials: 'same-origin',
+        });
+        if (!res.ok) throw new Error('Fetch failed');
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+        // Swap list (table body or grid)
+        const newList = doc.querySelector('#admin-news-list[data-ssr="true"]');
+        const currentList = document.querySelector('#admin-news-list[data-ssr="true"]');
+        if (newList && currentList) {
+          currentList.innerHTML = newList.innerHTML;
+        }
+
+        // Swap summary
+        const newSummary = doc.querySelector('.news-filter-summary');
+        const currentSummary = document.querySelector('.news-filter-summary');
+        if (newSummary && currentSummary) {
+          currentSummary.innerHTML = newSummary.innerHTML;
+        }
+
+        // Swap pagination
+        const newPagination = doc.querySelector('.admin-pagination[data-ssr="true"]');
+        const currentPagination = document.querySelector('.admin-pagination[data-ssr="true"]');
+        if (currentPagination) {
+          if (newPagination) {
+            currentPagination.outerHTML = newPagination.outerHTML;
+          } else {
+            currentPagination.remove();
+          }
+        } else if (newPagination) {
+          const parent = currentList?.closest('.admin-card') || currentList?.parentElement;
+          if (parent) {
+            parent.insertAdjacentHTML('beforeend', newPagination.outerHTML);
+          }
+        }
+
+        // Swap view toggle
+        const newToggle = doc.querySelector('.news-view-toggle');
+        const currentToggle = document.querySelector('.news-view-toggle');
+        if (newToggle && currentToggle) {
+          currentToggle.innerHTML = newToggle.innerHTML;
+        }
+
+        // Swap reset link
+        const newReset = doc.querySelector('.news-filter-reset-link');
+        const currentReset = document.querySelector('.news-filter-reset-link');
+        if (newReset && !currentReset) {
+          document.querySelector('.news-filter-footer-left')?.appendChild(newReset);
+        } else if (!newReset && currentReset) {
+          currentReset.remove();
+        }
+
+        bindNewsDeleteButtons();
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          form.submit();
+        }
+      } finally {
+        if (listEl) {
+          listEl.style.opacity = '1';
+        }
+      }
+    };
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        updateClearBtn();
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          runFilter();
+        }, 350);
+      });
+
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          clearTimeout(debounceTimer);
+          runFilter();
+        }
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+        }
+        clearTimeout(debounceTimer);
+        runFilter();
+      });
+    }
+
+    [statusSelect, categorySelect, perPageSelect].forEach((sel) => {
+      if (sel) {
+        sel.addEventListener('change', () => {
+          clearTimeout(debounceTimer);
+          runFilter();
+        });
+      }
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      clearTimeout(debounceTimer);
+      runFilter();
+    });
   }
 
   function bindNewsDeleteButtons() {

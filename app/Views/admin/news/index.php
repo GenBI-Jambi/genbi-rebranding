@@ -12,14 +12,15 @@ $layout = $layout ?? 'list';
 $startItem = ($page - 1) * $perPage + 1;
 $endItem = min($page * $perPage, $total);
 
+$selectedCategory = !empty($selectedCategories) ? (int) $selectedCategories[0] : null;
+
 $filterParams = array_filter([
     'q' => $filters['q'] ?? '',
     'status' => $filters['status'] ?? '',
+    'category' => $selectedCategory ?: '',
     'layout' => $layout,
+    'per_page' => $perPage !== 25 ? $perPage : '',
 ], static fn($v) => $v !== '' && $v !== null);
-foreach ($selectedCategories as $catId) {
-    $filterParams['category[' . $catId . ']'] = $catId;
-}
 ?>
 <section class="mx-auto max-w-7xl">
   <header class="cms-header slide-in">
@@ -34,22 +35,25 @@ foreach ($selectedCategories as $catId) {
   </header>
 
   <div class="mt-6">
-    <section class="admin-card p-4 md:p-6">
-      <form method="get" action="/admin/news" class="cms-toolbar cms-toolbar-admin" id="news-filter-form">
+    <section class="admin-card news-filter-card p-4 sm:p-5 md:p-6">
+      <form method="get" action="/admin/news" id="news-filter-form" class="news-filter-form">
         <input type="hidden" name="layout" value="<?= $e($layout) ?>">
-        <?php foreach ($selectedCategories as $catId): ?>
-          <input type="hidden" name="category[]" value="<?= (int) $catId ?>">
-        <?php endforeach; ?>
 
-        <div class="admin-toolbar-row">
-          <label class="cms-search">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            <input id="news-search" name="q" placeholder="Cari judul, konten, kategori..." value="<?= $e($filters['q'] ?? '') ?>">
-          </label>
+        <div class="news-filter-grid">
+          <!-- 1. Search Field -->
+          <div class="news-filter-field is-search">
+            <label for="news-search" class="news-filter-label">Pencarian</label>
+            <div class="news-search-wrap">
+              <svg class="news-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input id="news-search" name="q" class="news-filter-input" placeholder="Cari judul, konten, kategori..." value="<?= $e($filters['q'] ?? '') ?>" autocomplete="off">
+              <button type="button" id="news-search-clear" class="news-search-clear" title="Hapus pencarian" style="<?= !empty($filters['q']) ? '' : 'display: none;' ?>">×</button>
+            </div>
+          </div>
 
-          <div class="admin-filter-group">
-            <label class="text-sm text-neutral-600">Status</label>
-            <select name="status" class="config-input w-auto js-admin-custom-select" onchange="this.form.submit()">
+          <!-- 2. Status Field -->
+          <div class="news-filter-field is-status">
+            <label for="news-status-select" class="news-filter-label">Status</label>
+            <select id="news-status-select" name="status" class="config-input w-full js-admin-custom-select news-filter-select">
               <option value="">Semua Status</option>
               <option value="draft" <?= ($filters['status'] ?? '') === 'draft' ? 'selected' : '' ?>>Draft</option>
               <option value="published" <?= ($filters['status'] ?? '') === 'published' ? 'selected' : '' ?>>Published</option>
@@ -57,62 +61,69 @@ foreach ($selectedCategories as $catId) {
             </select>
           </div>
 
-          <div class="admin-filter-group">
-            <label class="text-sm text-neutral-600">Category</label>
-            <div class="admin-multi-select" data-ssr="true">
-              <button type="button" class="admin-multi-select-button" aria-expanded="false">
-                <span id="category-label"><?= empty($selectedCategories) ? 'Semua Kategori' : count($selectedCategories) . ' dipilih' ?></span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-              </button>
-              <div class="admin-multi-select-menu hidden">
-                <?php foreach ($categories as $cat): ?>
-                  <label class="admin-multi-select-option">
-                    <input type="checkbox" name="category[]" value="<?= (int) $cat['category_id'] ?>" <?= in_array((int) $cat['category_id'], $selectedCategories, true) ? 'checked' : '' ?>>
-                    <span><?= $e($cat['category_name']) ?></span>
-                  </label>
-                <?php endforeach; ?>
-                <div class="admin-multi-select-actions">
-                  <button type="button" class="admin-multi-select-clear">Clear</button>
-                  <button type="submit" class="admin-multi-select-apply">Apply</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <label class="admin-toolbar-inline-label text-sm text-neutral-600">
-            Show
-            <select name="per_page" class="config-input w-auto js-admin-custom-select" onchange="this.form.submit()">
-              <?php foreach ([10, 25, 50, 100] as $opt): ?>
-                <option value="<?= $opt ?>" <?= $opt === $perPage ? 'selected' : '' ?>><?= $opt ?></option>
+          <!-- 3. Category Field -->
+          <div class="news-filter-field is-category">
+            <label for="news-category-select" class="news-filter-label">Category</label>
+            <select id="news-category-select" name="category" class="config-input w-full js-admin-custom-select news-filter-select">
+              <option value="">Semua Kategori</option>
+              <?php foreach ($categories as $cat): ?>
+                <option value="<?= (int) $cat['category_id'] ?>" <?= in_array((int) $cat['category_id'], $selectedCategories, true) ? 'selected' : '' ?>>
+                  <?= $e($cat['category_name']) ?>
+                </option>
               <?php endforeach; ?>
             </select>
-            entries
-          </label>
+          </div>
+
+          <!-- 4. Show / Entries Field -->
+          <div class="news-filter-field is-per-page">
+            <label for="news-per-page-select" class="news-filter-label">Show Menampilkan</label>
+            <select id="news-per-page-select" name="per_page" class="config-input w-full js-admin-custom-select news-filter-select">
+              <?php foreach ([10, 25, 50, 100] as $opt): ?>
+                <option value="<?= $opt ?>" <?= $opt === $perPage ? 'selected' : '' ?>><?= $opt ?> entries</option>
+              <?php endforeach; ?>
+            </select>
+          </div>
         </div>
       </form>
 
-      <div class="admin-toolbar-footer mt-4">
-        <div class="view-toggle" role="group" aria-label="Layout mode">
-          <a href="?<?= $e(http_build_query(array_merge($filterParams, ['layout' => 'list']))) ?>" class="view-toggle-btn <?= $layout === 'list' ? 'is-active' : '' ?>">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            List
-          </a>
-          <a href="?<?= $e(http_build_query(array_merge($filterParams, ['layout' => 'grid']))) ?>" class="view-toggle-btn <?= $layout === 'grid' ? 'is-active' : '' ?>">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg>
-            Grid
-          </a>
+      <!-- Bottom Bar: View Toggle & Summary -->
+      <div class="news-filter-footer">
+        <div class="news-filter-footer-left">
+          <div class="news-view-toggle" role="group" aria-label="Layout mode">
+            <a href="?<?= $e(http_build_query(array_merge($filterParams, ['layout' => 'list']))) ?>" class="news-view-toggle-btn <?= $layout === 'list' ? 'is-active' : '' ?>" title="Tampilan Tabel">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+              <span>List</span>
+            </a>
+            <a href="?<?= $e(http_build_query(array_merge($filterParams, ['layout' => 'grid']))) ?>" class="news-view-toggle-btn <?= $layout === 'grid' ? 'is-active' : '' ?>" title="Tampilan Grid">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg>
+              <span>Grid</span>
+            </a>
+          </div>
+
+          <?php if (!empty($filters['q']) || !empty($filters['status']) || !empty($selectedCategories)): ?>
+            <a href="/admin/news?layout=<?= $e($layout) ?>" class="news-filter-reset-link" title="Reset filter ke awal">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              <span>Reset Filter</span>
+            </a>
+          <?php endif; ?>
         </div>
 
-        <?php if ($total > 0): ?>
-          <div class="admin-toolbar-summary text-sm text-neutral-600">
-            Menampilkan <?= $startItem ?>-<?= $endItem ?> dari <?= $total ?> berita.
-          </div>
-        <?php endif; ?>
+        <div class="news-filter-footer-right">
+          <?php if ($total > 0): ?>
+            <div class="news-filter-summary">
+              Menampilkan <span class="font-semibold text-neutral-800"><?= $startItem ?>-<?= $endItem ?></span> dari <span class="font-semibold text-neutral-800"><?= $total ?></span> berita.
+            </div>
+          <?php else: ?>
+            <div class="news-filter-summary text-neutral-500">
+              Tidak ada berita yang sesuai dengan filter.
+            </div>
+          <?php endif; ?>
+        </div>
       </div>
     </section>
 
     <?php if ($layout === 'list'): ?>
-      <section class="admin-card p-0 mt-5">
+      <section class="admin-card news-table-card p-0 mt-5">
         <div class="admin-data-table-wrap">
           <table class="admin-table admin-data-table admin-data-table-news">
             <colgroup>
