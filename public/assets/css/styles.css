@@ -5738,7 +5738,58 @@ html[data-theme^="dark-"] .bpi-slide-footer {
 
 .presensi-member-picker-modal .category-editor-panel {
   width: min(920px, calc(100vw - 2rem));
-  max-height: min(90vh, 760px);
+  height: min(88vh, 720px);
+  height: min(88dvh, 720px);
+  max-height: min(90vh, 780px);
+  max-height: min(90dvh, 780px);
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  border-radius: 1.5rem !important;
+  gap: 0 !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25) !important;
+}
+
+.presensi-member-picker-modal .category-editor-head {
+  padding: 1.25rem 1.75rem 0.85rem !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+  background: #ffffff !important;
+  flex-shrink: 0 !important;
+}
+
+.presensi-member-picker-modal .category-editor-close {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #f8fafc;
+  color: #64748b;
+  transition: all 150ms ease;
+}
+
+.presensi-member-picker-modal .category-editor-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.presensi-member-picker-modal .presensi-modal-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.presensi-member-picker-modal .presensi-member-picker {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  gap: 0;
 }
 
 .category-editor-head {
@@ -6327,6 +6378,13 @@ html[data-theme^="dark-"] .bpi-slide-footer {
   align-items: end;
 }
 
+.presensi-member-picker-modal .presensi-picker-toolbar {
+  padding: 0.85rem 1.75rem 0.75rem !important;
+  flex-shrink: 0 !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+}
+
 .presensi-check-all {
   display: inline-flex;
   grid-column: 1 / -1;
@@ -6357,10 +6415,33 @@ html[data-theme^="dark-"] .bpi-slide-footer {
   padding-right: 0.15rem;
 }
 
-@media (min-width: 760px) {
-  .presensi-member-picker-modal .presensi-picker-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.presensi-member-picker-modal .presensi-picker-list {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 0.85rem 1.75rem !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.65rem !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(17, 75, 154, 0.25) transparent !important;
+}
+
+.presensi-member-picker-modal .presensi-picker-list::-webkit-scrollbar {
+  width: 6px;
+}
+.presensi-member-picker-modal .presensi-picker-list::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 0.5rem 0;
+}
+.presensi-member-picker-modal .presensi-picker-list::-webkit-scrollbar-thumb {
+  background: rgba(17, 75, 154, 0.25);
+  border-radius: 999px;
+}
+.presensi-member-picker-modal .presensi-picker-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 75, 154, 0.45);
 }
 
 .presensi-picker-row {
@@ -6377,7 +6458,8 @@ html[data-theme^="dark-"] .bpi-slide-footer {
 }
 
 .presensi-picker-row:hover,
-.presensi-picker-row:focus-within {
+.presensi-picker-row:focus-within,
+.presensi-picker-row:has(input:checked) {
   border-color: rgb(var(--brand-primary, 17 75 154) / 0.28);
   background: rgb(var(--brand-soft, 238 246 255));
   box-shadow: 0 10px 28px rgb(15 23 42 / 0.08);
@@ -6412,8 +6494,24 @@ html[data-theme^="dark-"] .bpi-slide-footer {
   gap: 0.7rem;
 }
 
+.presensi-member-picker-modal .presensi-picker-pagination {
+  flex-shrink: 0 !important;
+  padding: 0.65rem 1.75rem !important;
+  background: #f8fafc !important;
+  border-top: 1px solid rgba(15, 23, 42, 0.06) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  flex-wrap: wrap !important;
+}
+
 .presensi-picker-pagination .admin-pagination {
   justify-content: center;
+}
+
+.presensi-member-picker-modal .presensi-picker-pagination .admin-pagination {
+  margin: 0 !important;
 }
 
 .presensi-picker-page-info {
@@ -6421,6 +6519,14 @@ html[data-theme^="dark-"] .bpi-slide-footer {
   font-size: 0.8rem;
   font-weight: 750;
   text-align: center;
+}
+
+.presensi-member-picker-modal .presensi-picker-page-info {
+  margin: 0 !important;
+  text-align: left !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
 }
 
 .presensi-page-gap {
@@ -6446,10 +6552,209 @@ html[data-theme^="dark-"] .bpi-slide-footer {
   backdrop-filter: blur(14px);
 }
 
+.presensi-member-picker-modal .presensi-picker-floating {
+  position: static !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  padding: 0.85rem 1.75rem !important;
+  background: #ffffff !important;
+  border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+  border-radius: 0 0 1.5rem 1.5rem !important;
+  box-shadow: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+}
+
 .presensi-picker-floating span {
   color: rgb(var(--text-primary, 23 23 23));
   font-size: 0.9rem;
   font-weight: 850;
+}
+
+.presensi-member-picker-modal .presensi-picker-floating span {
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+/* Mobile responsive rules for presensi-member-picker-modal */
+@media (max-width: 640px) {
+  .presensi-member-picker-modal {
+    padding: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .presensi-member-picker-modal .category-editor-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: calc(100dvh - 1rem) !important;
+    max-height: calc(100dvh - 1rem) !important;
+    border-radius: 1.25rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+  .presensi-member-picker-modal .category-editor-head {
+    padding: 0.85rem 1rem 0.65rem !important;
+  }
+  .presensi-member-picker-modal .category-editor-head h2 {
+    font-size: 1.15rem !important;
+  }
+  .presensi-member-picker-modal .category-editor-head .eyebrow {
+    font-size: 0.7rem !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-toolbar {
+    padding: 0.65rem 1rem !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-toolbar .config-field {
+    gap: 0.25rem !important;
+    margin: 0 !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-toolbar .config-field span {
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    color: #64748b !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-toolbar .config-input,
+  .presensi-member-picker-modal .presensi-picker-toolbar .admin-select-button {
+    height: 2.25rem !important;
+    min-height: 2.25rem !important;
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 0.6rem !important;
+  }
+  .presensi-member-picker-modal .presensi-check-all {
+    grid-column: 1 / -1 !important;
+    padding: 0.35rem 0.7rem !important;
+    font-size: 0.78rem !important;
+    gap: 0.45rem !important;
+    margin-top: 0.1rem !important;
+    width: fit-content !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-list {
+    grid-template-columns: 1fr !important;
+    padding: 0.65rem 1rem !important;
+    gap: 0.5rem !important;
+    min-height: 0 !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-row {
+    padding: 0.65rem 0.8rem !important;
+    border-radius: 0.875rem !important;
+    gap: 0.6rem !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-row strong {
+    font-size: 0.86rem !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-row small {
+    font-size: 0.74rem !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-pagination {
+    padding: 0.45rem 1rem !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-page-info {
+    text-align: center !important;
+    font-size: 0.74rem !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-pagination .admin-pagination {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    max-width: 100% !important;
+    gap: 0.25rem !important;
+    padding-bottom: 2px !important;
+    justify-content: center !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-pagination .pager-button {
+    min-width: 1.85rem !important;
+    height: 1.85rem !important;
+    padding: 0 0.35rem !important;
+    font-size: 0.75rem !important;
+    border-radius: 0.45rem !important;
+    flex-shrink: 0 !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-floating {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
+    padding: 0.65rem 1rem max(0.65rem, env(safe-area-inset-bottom)) !important;
+    border-radius: 0 0 1.25rem 1.25rem !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-floating span {
+    font-size: 0.84rem !important;
+    white-space: nowrap !important;
+  }
+  .presensi-member-picker-modal .presensi-picker-floating .btn {
+    width: auto !important;
+    padding: 0.5rem 1.15rem !important;
+    font-size: 0.84rem !important;
+    border-radius: 0.65rem !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* Dark theme overrides for presensi-member-picker-modal */
+html[data-theme^="dark-"] .presensi-member-picker-modal .category-editor-panel {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .category-editor-head {
+  background: #1e293b !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .category-editor-head h2 {
+  color: #f8fafc !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .category-editor-close {
+  background: #334155 !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .category-editor-close:hover {
+  background: #475569 !important;
+  color: #ffffff !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .presensi-picker-toolbar {
+  background: #1e293b !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .presensi-check-all {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .presensi-picker-row {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .presensi-picker-row:hover,
+html[data-theme^="dark-"] .presensi-member-picker-modal .presensi-picker-row:has(input:checked) {
+  background: #1e3a5f !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .presensi-picker-pagination {
+  background: #0f172a !important;
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .presensi-picker-floating {
+  background: #1e293b !important;
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+html[data-theme^="dark-"] .presensi-member-picker-modal .presensi-picker-floating span {
+  color: #f8fafc !important;
 }
 
 .presensi-table-header {
