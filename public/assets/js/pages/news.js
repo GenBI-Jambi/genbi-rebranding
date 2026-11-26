@@ -4,13 +4,106 @@ const { newsDetailUrl, renderShell } = window.GenBIApp;
 const { createCustomSelect, observeFadeUp, unique } = window.GenBIUI;
 const API = window.GenBIAPI;
 
-renderShell('news');
+if (document.body.dataset.ssr !== 'true') {
+  renderShell('news');
+}
 observeFadeUp();
+
+// Check if SSR markup exists
+const list = document.querySelector('#news-list');
+if (list?.dataset.ssr === 'true') {
+  document.body.classList.add('page-ready');
+  const filterForm = document.querySelector('#news-filter-form');
+  const searchInput = document.querySelector('#news-search');
+  const countEl = document.querySelector('#news-count');
+  const resetBtn = document.querySelector('#news-reset-link');
+  const pagination = document.querySelector('#news-pagination');
+  const articles = Array.from(list.querySelectorAll('article'));
+  let originalCountHtml = countEl ? countEl.innerHTML : '';
+
+  if (searchInput) {
+    // Smooth live filtering without needing any submit button
+    searchInput.addEventListener('input', (event) => {
+      const q = event.target.value.toLowerCase().trim();
+      let visibleCount = 0;
+
+      articles.forEach((art) => {
+        const titleEl = art.querySelector('h3');
+        const title = (titleEl?.textContent || '').toLowerCase();
+        const matches = !q || title.includes(q);
+        art.style.display = matches ? '' : 'none';
+        if (matches) visibleCount++;
+      });
+
+      // Show/hide reset button smoothly
+      if (resetBtn) {
+        if (q !== '') {
+          resetBtn.classList.remove('hidden');
+        } else {
+          // If input is empty and URL has no active query, hide reset button
+          const urlParams = new URLSearchParams(window.location.search);
+          if (!urlParams.get('q') && !urlParams.get('category')) {
+            resetBtn.classList.add('hidden');
+          }
+        }
+      }
+
+      // Smooth count feedback
+      if (countEl) {
+        if (q === '') {
+          countEl.innerHTML = originalCountHtml;
+        } else if (visibleCount > 0) {
+          countEl.innerHTML = `<div>Menampilkan <strong>${visibleCount}</strong> berita untuk pencarian judul "<strong>${escapeHtml(event.target.value)}</strong>".</div>`;
+        } else {
+          countEl.innerHTML = `<div>Tidak ada berita yang cocok dengan judul "<strong>${escapeHtml(event.target.value)}</strong>".</div>`;
+        }
+      }
+
+      // Dynamic empty state if all filtered out
+      let emptyMsg = list.querySelector('#news-live-empty');
+      if (visibleCount === 0 && articles.length > 0) {
+        if (!emptyMsg) {
+          emptyMsg = document.createElement('div');
+          emptyMsg.id = 'news-live-empty';
+          emptyMsg.className = 'rounded-2xl border border-neutral-900/10 bg-white p-8 text-center text-sm text-neutral-600';
+          emptyMsg.innerHTML = '<p class="font-medium text-neutral-800">Belum ada data berita yang cocok.</p><p class="mt-1 text-xs text-neutral-500">Silakan gunakan kata kunci judul lain atau klik Reset Filter.</p>';
+          list.appendChild(emptyMsg);
+        }
+        emptyMsg.style.display = '';
+      } else if (emptyMsg) {
+        emptyMsg.style.display = 'none';
+      }
+
+      // Hide server-side pagination while live search is active
+      if (pagination) {
+        pagination.style.display = q ? 'none' : '';
+      }
+    });
+
+    searchInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (filterForm) filterForm.submit();
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>'"]/g, tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag));
+  }
+
+  return;
+}
 
 let state = { query: '', category: 'Semua', page: 1, perPage: 12 };
 let news = [];
 const search = document.querySelector('#news-search');
-const list = document.querySelector('#news-list');
 const count = document.querySelector('#news-count');
 const pagination = document.querySelector('#news-pagination');
 
@@ -36,7 +129,7 @@ async function init() {
 function renderNews() {
   const query = state.query.toLowerCase().trim();
   const filtered = news.filter((item) => {
-    const haystack = `${item.title} ${item.category} ${item.excerpt}`.toLowerCase();
+    const haystack = (item.title || '').toLowerCase();
     return (!query || haystack.includes(query)) && (state.category === 'Semua' || item.category === state.category);
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / state.perPage));
@@ -66,20 +159,39 @@ function renderNews() {
   renderPagination(totalPages);
 }
 
+function getPaginationItems(current, total) {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, '...', total];
+  }
+  if (current >= total - 3) {
+    return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total];
+}
+
 function renderPagination(totalPages) {
   if (!pagination) return;
   if (totalPages <= 1) {
     pagination.innerHTML = '';
     return;
   }
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const items = getPaginationItems(state.page, totalPages);
   pagination.innerHTML = `
-    <button class="pager-button" type="button" data-page="${Math.max(1, state.page - 1)}" ${state.page === 1 ? 'disabled' : ''}>Sebelumnya</button>
-    ${pages.map((page) => `<button class="pager-button ${page === state.page ? 'is-active' : ''}" type="button" data-page="${page}">${page}</button>`).join('')}
-    <button class="pager-button" type="button" data-page="${Math.min(totalPages, state.page + 1)}" ${state.page === totalPages ? 'disabled' : ''}>Berikutnya</button>
+    <button class="pager-button" type="button" data-page="${Math.max(1, state.page - 1)}" ${state.page === 1 ? 'disabled aria-disabled="true"' : ''}>Sebelumnya</button>
+    ${items.map((item) => {
+      if (item === '...') {
+        return `<span class="pager-ellipsis" aria-hidden="true">&hellip;</span>`;
+      }
+      return `<button class="pager-button ${item === state.page ? 'is-active' : ''}" type="button" data-page="${item}" ${item === state.page ? 'aria-current="page"' : ''}>${item}</button>`;
+    }).join('')}
+    <button class="pager-button" type="button" data-page="${Math.min(totalPages, state.page + 1)}" ${state.page === totalPages ? 'disabled aria-disabled="true"' : ''}>Berikutnya</button>
   `;
   pagination.querySelectorAll('[data-page]').forEach((button) => {
     button.addEventListener('click', () => {
+      if (button.disabled || button.getAttribute('aria-disabled') === 'true') return;
       state.page = Number(button.dataset.page) || 1;
       renderNews();
       list.scrollIntoView({ behavior: 'smooth', block: 'start' });

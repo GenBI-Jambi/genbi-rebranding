@@ -16,7 +16,7 @@ final class Response
         if ($this->isHeadRequest()) {
             return;
         }
-        echo $content;
+        echo HotReload::inject($content);
     }
 
     public function redirect(string $url, int $status = 302): void
@@ -28,6 +28,10 @@ final class Response
     /** @param array<string, mixed>|array<int, mixed> $payload */
     public function json(array $payload, int $status = 200, array $headers = []): void
     {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
         http_response_code($status);
         header('Content-Type: application/json; charset=UTF-8');
         foreach ($headers as $name => $value) {
@@ -37,6 +41,7 @@ final class Response
             return;
         }
         echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        exit;
     }
 
     public function xml(string $content, int $status = 200, array $headers = []): void

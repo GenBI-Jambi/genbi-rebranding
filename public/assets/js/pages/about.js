@@ -5,12 +5,36 @@ const { observeFadeUp } = window.GenBIUI;
 const { aboutBlocks } = window.GenBIData;
 
 renderShell('about');
-renderAbout();
-renderRoles();
+if (document.body.dataset.ssr !== 'true') {
+  renderAbout();
+  renderRoles();
+}
+setupFaqAccordion();
 observeFadeUp();
+
+function setupFaqAccordion() {
+  const container = document.querySelector('#faq-accordion');
+  if (!container) return;
+  const items = container.querySelectorAll('.faq-item');
+  items.forEach((item) => {
+    const summary = item.querySelector('summary');
+    if (!summary) return;
+    summary.addEventListener('click', () => {
+      const willOpen = !item.hasAttribute('open');
+      if (willOpen) {
+        items.forEach((other) => {
+          if (other !== item && other.hasAttribute('open')) {
+            other.removeAttribute('open');
+          }
+        });
+      }
+    });
+  });
+}
 
 function renderAbout() {
   const root = document.querySelector('#about-content');
+  if (!root) return;
   root.innerHTML = aboutBlocks.map((block) => `
     <section class="border-t border-neutral-900/10 py-9 first:border-t-0 first:pt-0">
       <h2 class="serif text-3xl font-semibold tracking-tight text-neutral-950">${block.title}</h2>
@@ -21,6 +45,7 @@ function renderAbout() {
 
 function renderRoles() {
   const root = document.querySelector('#role-list');
+  if (!root) return;
   const roles = [
     { title: 'Frontliners Bank Indonesia', text: 'Mengkomunikasikan kelembagaan dan berbagai kebijakan Bank Indonesia kepada mahasiswa dan masyarakat umum.' },
     { title: 'Change Agents', text: 'Menjadi agen perubahan dan role model di kalangan pelajar, mahasiswa, dan masyarakat.' },

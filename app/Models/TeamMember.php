@@ -18,7 +18,22 @@ class TeamMember
         $role = (string) ($row['designation'] ?? $row['jabatan_wilayah'] ?? $row['jabatan_komsat'] ?? 'Anggota');
         $detail = (string) ($row['detail'] ?? '');
         $photo = (string) ($row['photo'] ?? '');
-        $division = (string) ($row['division_name'] ?? 'Belum ada divisi');
+        $divisionId = isset($row['division_id']) ? (int) $row['division_id'] : (int) ($row['divisi_id'] ?? 0);
+        $division = trim((string) ($row['division_name'] ?? ''));
+        if ($division === '' || $division === 'Belum ada divisi') {
+            if ($divisionId === 101) {
+                $division = 'Media dan Creative Wilayah';
+            } elseif ($divisionId === 102) {
+                $division = 'IT dan Website Wilayah';
+            } elseif ($divisionId === 103) {
+                $division = 'Divisi Pengembangan Sumber Daya Manusia';
+            } else {
+                $division = 'Belum ada divisi';
+            }
+        }
+        if ((stripos($division, 'pengembangan sumber daya manusia') !== false || stripos($division, 'pengembangan sdm') !== false || strtolower($division) === 'psdm') && !preg_match('/^divisi\b/i', $division)) {
+            $division = 'Divisi ' . $division;
+        }
         $commission = (string) ($row['commission_name'] ?? $row['komsat'] ?? 'GenBI Jambi');
 
         return [
@@ -59,13 +74,19 @@ class TeamMember
         try {
             [$where, $params] = $this->buildPublicFilterSql($filters);
             $stmt = $this->db->prepare(
-                'SELECT t.*, d.id AS division_id, d.nama AS division_name, k.nama AS commission_name
+                "SELECT t.*, d.id AS division_id, d.nama AS division_name, k.nama AS commission_name
                  FROM teams t
                  LEFT JOIN divisis d ON d.id = t.divisi_id
                  LEFT JOIN komsats k ON k.id = t.komsat_id
-                 WHERE ' . $where . '
-                 ORDER BY t.tahun DESC, COALESCE(k.nama, t.komsat) ASC, d.nama ASC, t.id ASC
-                 LIMIT :limit OFFSET :offset'
+                 WHERE " . $where . "
+                 ORDER BY
+                    CASE
+                      WHEN (LOWER(COALESCE(d.nama, '')) LIKE '%badan pengurus inti%' OR LOWER(COALESCE(d.nama, '')) LIKE '%bpi%')
+                        AND LOWER(COALESCE(k.nama, t.komsat, '')) LIKE '%genbi wilayah%' THEN 0
+                      ELSE 1
+                    END ASC,
+                    t.tahun DESC, COALESCE(k.nama, t.komsat) ASC, d.nama ASC, t.id ASC
+                 LIMIT :limit OFFSET :offset"
             );
             foreach ($params as $key => $value) {
                 $stmt->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
@@ -129,26 +150,108 @@ class TeamMember
     }
 
     /** @return array<int, array<string, mixed>> */
-    public function bpiCore(int $limit = 10): array
+    public function searchOptions(string $query = '', int $limit = 12, array $filters = []): array
     {
         if (!$this->db) {
             return [];
         }
 
         try {
+            $limit = max(1, min(500, $limit));
+            $sql = 'SELECT t.*, d.id AS division_id, d.nama AS division_name, k.nama AS commission_name
+                 FROM teams t
+                 LEFT JOIN divisis d ON d.id = t.divisi_id
+                 LEFT JOIN komsats k ON k.id = t.komsat_id
+                 WHERE t.deleted_at IS NULL';
+            $params = [];
+            if (trim($query) !== '') {
+                $search = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], trim($query)) . '%';
+                $sql .= ' AND (t.name LIKE :q_name OR t.designation LIKE :q_designation OR d.nama LIKE :q_division OR COALESCE(k.nama, t.komsat) LIKE :q_campus)';
+                $params[':q_name'] = $search;
+                $params[':q_designation'] = $search;
+                $params[':q_division'] = $search;
+                $params[':q_campus'] = $search;
+            }
+            $divisionId = (int) ($filters['division_id'] ?? $filters['divisi_id'] ?? 0);
+            if ($divisionId > 0) {
+                $sql .= ' AND t.divisi_id = :division_id';
+                $params[':division_id'] = $divisionId;
+            }
+            if (!empty($filters['active_only'])) {
+                $sql .= " AND LOWER(COALESCE(k.nama, t.komsat, '')) NOT LIKE :alumni_komsat";
+                $params[':alumni_komsat'] = '%alumni%';
+            }
+            $sql .= ' ORDER BY t.name ASC LIMIT :limit';
+
+            $stmt = $this->db->prepare($sql);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return array_map([self::class, 'mapRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function bpiCore(?int $limit = 10): array
+    {
+        if (!$this->db) {
+            return [];
+        }
+
+        try {
+            $yearStmt = $this->db->query('SELECT MAX(CAST(tahun AS UNSIGNED)) FROM teams WHERE deleted_at IS NULL');
+            $latestYear = (int) $yearStmt->fetchColumn();
+            if ($latestYear < 1) {
+                return [];
+            }
+
+            $limitSql = $limit !== null && $limit > 0 ? ' LIMIT :limit' : '';
+
+            $manualStmt = $this->db->prepare(
+                "SELECT t.*, d.id AS division_id, d.nama AS division_name, k.nama AS commission_name
+                 FROM teams t
+                 LEFT JOIN divisis d ON d.id = t.divisi_id
+                 LEFT JOIN komsats k ON k.id = t.komsat_id
+                 WHERE t.deleted_at IS NULL
+                   AND CAST(t.tahun AS UNSIGNED) = :year
+                   AND t.show_on_home = 1
+                  ORDER BY
+                    CASE
+                      WHEN (LOWER(COALESCE(d.nama, '')) LIKE '%badan pengurus inti%' OR LOWER(COALESCE(d.nama, '')) LIKE '%bpi%')
+                        AND LOWER(COALESCE(k.nama, t.komsat, '')) LIKE '%genbi wilayah%' THEN 0
+                      ELSE 1
+                    END ASC,
+                    t.home_sort_order ASC, t.id ASC" . $limitSql
+            );
+            $manualStmt->bindValue(':year', $latestYear, PDO::PARAM_INT);
+            if ($limitSql !== '') {
+                $manualStmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            }
+            $manualStmt->execute();
+            $manualRows = $manualStmt->fetchAll(PDO::FETCH_ASSOC);
+            if ($manualRows !== []) {
+                return array_map([self::class, 'mapRow'], $manualRows);
+            }
+
             $stmt = $this->db->prepare(
                 "SELECT t.*, d.id AS division_id, d.nama AS division_name, k.nama AS commission_name
                  FROM teams t
                  LEFT JOIN divisis d ON d.id = t.divisi_id
                  LEFT JOIN komsats k ON k.id = t.komsat_id
-                  WHERE t.deleted_at IS NULL
-                    AND (t.show_on_home = 1
-                      OR LOWER(COALESCE(d.nama, t.designation, '')) LIKE '%badan pengurus inti%'
-                      OR LOWER(COALESCE(t.designation, '')) REGEXP 'ketua|sekretaris|bendahara|koordinator')
-                  ORDER BY t.show_on_home DESC, t.home_sort_order ASC, t.tahun DESC, t.id ASC
-                  LIMIT :limit"
+                 WHERE t.deleted_at IS NULL
+                   AND CAST(t.tahun AS UNSIGNED) = :year
+                   AND LOWER(COALESCE(d.nama, '')) LIKE '%badan pengurus inti%'
+                  ORDER BY t.home_sort_order ASC, t.id ASC" . $limitSql
             );
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':year', $latestYear, PDO::PARAM_INT);
+            if ($limitSql !== '') {
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            }
             $stmt->execute();
 
             return array_map([self::class, 'mapRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -161,17 +264,17 @@ class TeamMember
     public function filterOptions(): array
     {
         if (!$this->db) {
-            return ['divisions' => [], 'campuses' => [], 'years' => []];
+            return ['divisions' => self::formatFilterDivisionNames([]), 'campuses' => [], 'years' => []];
         }
 
         try {
             return [
-                'divisions' => $this->db->query('SELECT nama FROM divisis ORDER BY nama')->fetchAll(PDO::FETCH_COLUMN),
+                'divisions' => self::formatFilterDivisionNames($this->db->query('SELECT nama FROM divisis ORDER BY nama')->fetchAll(PDO::FETCH_COLUMN)),
                 'campuses' => $this->db->query('SELECT nama FROM komsats ORDER BY nama')->fetchAll(PDO::FETCH_COLUMN),
                 'years' => array_map('strval', $this->db->query('SELECT DISTINCT tahun FROM teams WHERE deleted_at IS NULL ORDER BY tahun DESC')->fetchAll(PDO::FETCH_COLUMN)),
             ];
         } catch (Throwable) {
-            return ['divisions' => [], 'campuses' => [], 'years' => []];
+            return ['divisions' => self::formatFilterDivisionNames([]), 'campuses' => [], 'years' => []];
         }
     }
 
@@ -179,17 +282,95 @@ class TeamMember
     public function formOptions(): array
     {
         if (!$this->db) {
-            return ['divisions' => [], 'commissions' => []];
+            return ['divisions' => self::formatDivisionOptions([]), 'commissions' => []];
         }
 
         try {
             return [
-                'divisions' => $this->db->query('SELECT id, nama, komsat_id FROM divisis ORDER BY nama')->fetchAll(PDO::FETCH_ASSOC),
+                'divisions' => self::formatDivisionOptions($this->db->query('SELECT id, nama, komsat_id FROM divisis ORDER BY nama')->fetchAll(PDO::FETCH_ASSOC)),
                 'commissions' => $this->db->query('SELECT id, nama FROM komsats ORDER BY nama')->fetchAll(PDO::FETCH_ASSOC),
             ];
         } catch (Throwable) {
-            return ['divisions' => [], 'commissions' => []];
+            return ['divisions' => self::formatDivisionOptions([]), 'commissions' => []];
         }
+    }
+
+    /** @param array<int, array<string, mixed>> $dbDivisions @return array<int, array<string, mixed>> */
+    public static function formatDivisionOptions(array $dbDivisions): array
+    {
+        $bpiItem = null;
+        $mediaItem = null;
+        $itItem = null;
+        $otherDivisions = [];
+
+        foreach ($dbDivisions as $div) {
+            $nama = trim((string) ($div['nama'] ?? ''));
+            $lower = strtolower($nama);
+
+            if ((stripos($lower, 'pengembangan sumber daya manusia') !== false || stripos($lower, 'pengembangan sdm') !== false || $lower === 'psdm') && !preg_match('/^divisi\b/i', $nama)) {
+                $nama = 'Divisi ' . $nama;
+                $div['nama'] = $nama;
+                $lower = strtolower($nama);
+            }
+
+            if (stripos($lower, 'badan pengurus inti') !== false || $lower === 'bpi') {
+                $bpiItem = $div;
+            } elseif (stripos($lower, 'media dan creative') !== false || stripos($lower, 'media & creative') !== false) {
+                $mediaItem = $div;
+            } elseif (stripos($lower, 'it dan website') !== false || stripos($lower, 'it & website') !== false) {
+                $itItem = $div;
+            } else {
+                $otherDivisions[] = $div;
+            }
+        }
+
+        if ($bpiItem === null) {
+            $bpiItem = ['id' => 1, 'nama' => 'Badan Pengurus Inti', 'komsat_id' => 1];
+        }
+
+        if ($mediaItem === null) {
+            $mediaItem = ['id' => 101, 'nama' => 'Media dan Creative Wilayah', 'komsat_id' => (int) ($bpiItem['komsat_id'] ?? 1)];
+        }
+
+        if ($itItem === null) {
+            $itItem = ['id' => 102, 'nama' => 'IT dan Website Wilayah', 'komsat_id' => (int) ($bpiItem['komsat_id'] ?? 1)];
+        }
+
+        return array_merge([$bpiItem, $mediaItem, $itItem], $otherDivisions);
+    }
+
+    /** @param array<int, mixed> $rawDivisions @return array<int, string> */
+    public static function formatFilterDivisionNames(array $rawDivisions): array
+    {
+        $formattedDivs = [];
+        $bpiFound = false;
+
+        foreach ($rawDivisions as $divName) {
+            $nameStr = trim((string) $divName);
+            if ((stripos($nameStr, 'pengembangan sumber daya manusia') !== false || stripos($nameStr, 'pengembangan sdm') !== false || strtolower($nameStr) === 'psdm') && !preg_match('/^divisi\b/i', $nameStr)) {
+                $nameStr = 'Divisi ' . $nameStr;
+            }
+            $lower = strtolower($nameStr);
+            if (stripos($lower, 'badan pengurus inti') !== false || $lower === 'bpi') {
+                $formattedDivs[] = $nameStr;
+                $bpiFound = true;
+                $formattedDivs[] = 'Media dan Creative Wilayah';
+                $formattedDivs[] = 'IT dan Website Wilayah';
+            } elseif (
+                stripos($lower, 'media dan creative') === false &&
+                stripos($lower, 'media & creative') === false &&
+                stripos($lower, 'it dan website') === false &&
+                stripos($lower, 'it & website') === false
+            ) {
+                $formattedDivs[] = $nameStr;
+            }
+        }
+
+        if (!$bpiFound) {
+            array_unshift($formattedDivs, 'Badan Pengurus Inti', 'Media dan Creative Wilayah', 'IT dan Website Wilayah');
+        }
+
+        return array_values(array_unique($formattedDivs));
     }
 
     /** @param array<string, string|null> $filters @return array{0: string, 1: array<string, string|int>} */
@@ -199,7 +380,16 @@ class TeamMember
         $params = [];
 
         if (!empty($filters['division'])) {
-            $where[] = 'd.nama = :division';
+            $divFilter = (string) $filters['division'];
+            if ($divFilter === 'Media dan Creative Wilayah') {
+                $where[] = '(d.nama = :division OR t.divisi_id = 101)';
+            } elseif ($divFilter === 'IT dan Website Wilayah') {
+                $where[] = '(d.nama = :division OR t.divisi_id = 102)';
+            } elseif (stripos($divFilter, 'pengembangan sumber daya manusia') !== false || stripos($divFilter, 'psdm') !== false) {
+                $where[] = '(d.nama = :division OR d.nama = \'Pengembangan Sumber Daya Manusia\' OR d.nama LIKE \'%Pengembangan Sumber Daya Manusia%\' OR t.divisi_id = 103)';
+            } else {
+                $where[] = 'd.nama = :division';
+            }
             $params['division'] = (string) $filters['division'];
         }
 
@@ -215,7 +405,7 @@ class TeamMember
 
         if (!empty($filters['q'])) {
             $where[] = '(t.name LIKE :q_name OR t.designation LIKE :q_designation OR d.nama LIKE :q_division OR COALESCE(k.nama, t.komsat) LIKE :q_campus)';
-            $search = '%' . $filters['q'] . '%';
+            $search = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
             $params['q_name'] = $search;
             $params['q_designation'] = $search;
             $params['q_division'] = $search;
@@ -310,6 +500,35 @@ class TeamMember
     }
 
     /** @param array<int, int> $ids */
+    public function setAlumniStatus(array $ids): int
+    {
+        if (!$this->db || empty($ids)) return 0;
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn(int $id): bool => $id > 0)));
+        if (empty($ids)) return 0;
+
+        try {
+            $alumniId = $this->ensureAlumniCommissionId();
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $komsatIdSql = $alumniId > 0 ? 'komsat_id = ?' : 'komsat_id = NULL';
+            $stmt = $this->db->prepare(
+                "UPDATE teams
+                 SET {$komsatIdSql},
+                     komsat = 'Alumni',
+                     show_on_home = 0,
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id IN ($placeholders) AND deleted_at IS NULL"
+            );
+            $params = $alumniId > 0 ? array_merge([$alumniId], $ids) : $ids;
+            $stmt->execute($params);
+
+            return $stmt->rowCount();
+        } catch (Throwable) {
+            return 0;
+        }
+    }
+
+    /** @param array<int, int> $ids */
     public function setHomeVisibility(array $ids, bool $visible): int
     {
         if (!$this->db || empty($ids)) return 0;
@@ -342,6 +561,28 @@ class TeamMember
             $stmt->execute($ids);
 
             return $stmt->rowCount();
+        } catch (Throwable) {
+            return 0;
+        }
+    }
+
+    private function ensureAlumniCommissionId(): int
+    {
+        if (!$this->db) {
+            return 0;
+        }
+
+        try {
+            $stmt = $this->db->query("SELECT id FROM komsats WHERE LOWER(nama) = 'alumni' OR LOWER(nama) LIKE '%alumni%' ORDER BY CASE WHEN LOWER(nama) = 'alumni' THEN 0 ELSE 1 END, id ASC LIMIT 1");
+            $existing = (int) ($stmt?->fetchColumn() ?: 0);
+            if ($existing > 0) {
+                return $existing;
+            }
+
+            $insert = $this->db->prepare("INSERT INTO komsats (nama) VALUES ('Alumni')");
+            $insert->execute();
+
+            return (int) $this->db->lastInsertId();
         } catch (Throwable) {
             return 0;
         }

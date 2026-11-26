@@ -26,9 +26,9 @@
       if (token) headers['X-CSRF-TOKEN'] = token;
     }
     const response = await window.fetch(path, {
-      headers,
-      credentials: 'same-origin',
       ...options,
+      headers,
+      credentials: options.credentials || 'same-origin',
     });
     if (!response.ok) throw new Error(`Request failed: ${response.status}`);
     return response.json();
@@ -70,28 +70,36 @@
 
   async function getNewsComments(news) {
     const slug = news?.slug || news?.id;
-    const fallbackComments = [
-      { id: 1, name: 'Rina Aprilianti', role: 'Mahasiswa', status: 'Disetujui', text: 'Beritanya membantu memahami kegiatan GenBI Jambi dengan lebih ringkas.' },
-      { id: 2, name: 'Dimas Pratama', role: 'Anggota GenBI', status: 'Pending', text: 'Dokumentasi kegiatan bisa ditambah pada pembaruan berikutnya.' },
-      { id: 3, name: 'Aulia Rahman', role: 'Pembaca', status: 'Approved', text: 'Semoga agenda serupa makin sering hadir untuk mahasiswa Jambi.' },
-    ];
     return withFallback(
-      async () => Core.normalizeApprovedComments(await requestJson(Core.routeUrl('public.newsComments', { slug }))),
-      () => Core.normalizeApprovedComments(fallbackComments)
+      async () => Core.normalizeCommentTree(await requestJson(Core.routeUrl('public.newsComments', { slug }))),
+      () => ({ data: [], policy: {}, voter: { votes: {} } })
     );
   }
 
   async function submitNewsComment(news, payload) {
     const slug = news?.slug || news?.id;
-    const body = Core.createCommentPayload(payload);
-    return withFallback(
-      async () => requestJson(Core.routeUrl('public.newsCommentStore', { slug }), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      }),
-      () => ({ ok: true, mode: 'fallback', message: 'Komentar masuk antrean moderasi.' })
-    );
+    const body = payload && Object.prototype.hasOwnProperty.call(payload, 'parentId')
+      ? Core.buildCommentReplyPayload(payload)
+      : Core.createCommentPayload(payload);
+    const token = getCsrfToken();
+    if (token) body._csrf_token = token;
+    return requestJson(Core.routeUrl('public.newsCommentStore', { slug }), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+
+  async function voteComment(news, commentId, value) {
+    const slug = news?.slug || news?.id;
+    const body = { value };
+    const token = getCsrfToken();
+    if (token) body._csrf_token = token;
+    return requestJson(Core.buildCommentVoteEndpoint(slug, commentId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
   }
 
   async function getPrestasiList(filters = {}) {
@@ -130,10 +138,14 @@
     );
   }
 
-  async function getEventDetail(id) {
+  async function getEventDetail(identifier) {
     return withFallback(
-      async () => Core.normalizeEvent((await requestJson(Core.routeUrl('public.eventDetail', { id }))).data || {}),
-      () => Core.normalizeEventList(Data.publicEvents || []).find((e) => String(e.id) === String(id)) || null
+      async () => {
+        const fallbackItem = Core.normalizeEventList(Data.publicEvents || []).find((e) => String(e.id) === String(identifier) || e.slug === String(identifier));
+        const slug = fallbackItem?.slug || String(identifier);
+        return Core.normalizeEvent((await requestJson(Core.routeUrl('public.eventDetail', { slug }))).data || {});
+      },
+      () => Core.normalizeEventList(Data.publicEvents || []).find((e) => String(e.id) === String(identifier) || e.slug === String(identifier)) || null
     );
   }
 
@@ -152,18 +164,70 @@
     );
   }
 
+  async function getCommentSettings() {
+    return withFallback(
+      async () => (await requestJson(Core.routeUrl('admin.commentSetting'))).data || {},
+      () => ({})
+    );
+  }
+
+  async function updateCommentSettings(values) {
+    return requestJson(Core.routeUrl('admin.commentSetting'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(values || {}),
+    });
+  }
+
+  async function getTeamMemberOptions(query = '', limit = 12) {
+    const params = typeof query === 'object' && query !== null
+      ? { ...query }
+      : { q: query, limit };
+    params.type = params.type || 'member';
+    params.limit = params.limit || limit || 12;
+    return requestJson(Core.buildEndpoint(Core.routeUrl('admin.teamMemberOptions'), params));
+  }
+
+  async function getPresensiEvent(id) {
+    return requestJson(Core.routeUrl('admin.presensiShow', { id }));
+  }
+
+  async function getPresensiSubmissions(id) {
+    return requestJson(Core.routeUrl('admin.presensiSubmissions', { id }));
+  }
+
+  async function approvePresensiSubmission(id) {
+    return requestJson(Core.routeUrl('admin.presensiApprove', { id }), { method: 'POST' });
+  }
+
+  async function submitPresensi(token, formData) {
+    return requestJson(Core.routeUrl('public.presensiShow', { token }), {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
   window.GenBIAPI = {
+    approvePresensiSubmission,
     getCsrfToken,
     getAdminComments,
+    getCommentSettings,
     getEventDetail,
     getEventList,
     getNewsComments,
     getNewsDetail,
     getNewsList,
     getPrestasiList,
+    getPresensiEvent,
+    getPresensiSubmissions,
     getRelatedNews,
     getTeamList,
+    getTeamMemberOptions,
     moderateComment,
+    requestJson,
+    submitPresensi,
     submitNewsComment,
+    updateCommentSettings,
+    voteComment,
   };
 })();

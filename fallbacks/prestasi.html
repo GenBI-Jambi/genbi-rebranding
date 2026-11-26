@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prestasi | GenBI Provinsi Jambi</title>
+  <link rel="stylesheet" href="assets/css/tailwind.css" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div id="site-header"></div>
+  <main>
+    <section class="bg-stone py-16 md:py-24">
+      <div class="site-container">
+        <p class="eyebrow">Prestasi</p>
+        <h1 class="page-title mt-5 max-w-4xl">Rekam capaian anggota GenBI Jambi.</h1>
+        <p class="lead mt-7 max-w-3xl">Prestasi ditampilkan sebagai daftar reputasi. Lebih rapi, mudah dipindai, dan tidak bergantung pada gambar besar saja.</p>
+      </div>
+    </section>
+    <section class="bg-cream py-12 md:py-16">
+      <div class="site-container">
+        <div class="fade-up mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div class="text-sm text-neutral-600" id="prestasi-count">
+            Daftar Prestasi Anggota GenBI Provinsi Jambi
+          </div>
+          <div class="flex items-center gap-1.5" role="group" aria-label="Pilihan tampilan data">
+            <button type="button" class="chip is-active flex items-center gap-2" data-prestasi-layout="grid" aria-label="Tampilan Kisi">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+              </svg>
+              <span>Kisi</span>
+            </button>
+            <button type="button" class="chip flex items-center gap-2" data-prestasi-layout="list" aria-label="Tampilan Daftar">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+              <span>Daftar</span>
+            </button>
+          </div>
+        </div>
+        <div class="soft-card overflow-hidden" id="prestasi-list"></div>
+      </div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/api-core.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/lib/ui.js"></script>
+  <script src="assets/js/pages/prestasi.js"></script>
+</body>
+</html>
